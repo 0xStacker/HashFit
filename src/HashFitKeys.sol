@@ -25,6 +25,7 @@ abstract contract KeyScaffold is ERC721A{
 
 contract HashFitMythic is KeyScaffold, IHashFitKey{
     uint public immutable generation;
+    
 
     constructor(string memory name, string memory symbol, string memory _uri) ERC721A(name, symbol){
         FACTORY = msg.sender;
