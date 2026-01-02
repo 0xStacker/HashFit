@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.25;
 import {ERC721A} from "@ERC721A/ERC721A.sol";
-import {IHashFitKey} from "./IHashFitKey.sol";
+import {IHashFitKey, IHashFitLegendary, IHashFitMythic} from "./IHashFitKey.sol";
 
 /**
  * @title HashFit Keys
@@ -58,6 +58,10 @@ abstract contract KeyScaffold is ERC721A, IHashFitKey {
         _;
     }
     
+    // EIP 165
+    function supportsInterface(bytes4 interfaceId) external override returns(bool){
+        return interfaceId == type(IHashFItKey).interfaceId || super.supportsInterface()
+    }
     /// @dev admin gated function used for manual key distribution.
     function distributeKeys(Receiver[] memory receivers) external onlyFactory {
         for (uint256 i; i < receivers.length; i++) {
@@ -78,6 +82,9 @@ abstract contract KeyScaffold is ERC721A, IHashFitKey {
         validity = KEY_VALIDITY;
     }
 
+    function keyTier() external virtual returns(bytes32 memory){
+        return keccak256(bytes("KEY TIER"));
+    }
     // keyId starts from 1
     function _startTokenId() internal pure override returns (uint256) {
         return 1;
@@ -100,11 +107,18 @@ abstract contract KeyScaffold is ERC721A, IHashFitKey {
 ///       - Can be redeemed for an item in a mythic tier (exclusive) apparel drops
 ///       - Can be redeemed for exclusive irl perks (future updates)
 contract HashFitMythic is KeyScaffold{
+    bytes32 internal constant TIER = keccak256(bytes("MYTHIC"));
+
     constructor(Metadata memory _keyMetaData, KeyDetail memory _keyDetail) KeyScaffold(_keyMetaData, _keyDetail){}
+    
+    function keyTier() external override returns(bytes32){
+        return TIER;
+    }
 
     function approve(address, uint256) public payable virtual override {
         revert MythicKeyNonTransferrable();
     }
+
 
     function setApprovalForAll(address, bool) public virtual override {
         revert MythicKeyNonTransferrable();
@@ -134,7 +148,12 @@ contract HashFitMythic is KeyScaffold{
 ///        - Transferrable
 ///        - Can be used to purchase an item in Legendary tier apparel drops or lower
 ///        - Expires if not used within the time frame for which its usage is valid
-contract HashFitLegendary is KeyScaffold{
+contract HashFitLegendary is KeyScaffold, IHashFitLengendary{
+    bytes32 internal constant TIER = keccak256(bytes("LEGENDARY"));
     constructor(Metadata memory _keyMetaData, KeyDetail memory _keyDetail) KeyScaffold(_keyMetaData, _keyDetail){}
+
+    function keyTier() external override returns(bytes32){
+        return TIER;
+    }
 }
 
