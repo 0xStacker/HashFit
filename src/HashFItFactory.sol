@@ -2,49 +2,41 @@
 pragma solidity ^0.8.25;
 import {IHashFitFactory} from "./IHashFitFactory.sol";
 import {HashFit} from "./HashFit.sol";
-import {KeyScaffold, HashFitMythic, HashFitLegendary} from "./HashFitKeys.sol";
+import {KeyScaffold, HashFitMythic, HashFitLegendary, HashFitEpic} from "./HashFitKeys.sol";
 
-contract HashFitFactory is IHashFitFactory{
-    uint256 internal nextGeneration;
-
+contract HashFitFactory is IHashFitFactory {
+    address immutable HASHFIT_MYTHIC;
+    address immutable HASHFIT_EPIC;
     address public keyBurner;
     address public crafter;
-    GenKey public genesis = keys[0];
+    address public genesisDrop = drop[0];
+    uint256 internal nextGeneration;
 
-    mapping(uint keyGen => HashFit.GenKey) internal keys;
-    mapping (uint drop => address) public drop;
+    mapping(uint256 keyGen => address) internal legendaryKeys;
+    mapping(uint256 drop => address) public drop;
 
-    struct GenKeyinfo{
+    struct GenKeyInfo {
         KeyScaffold.Metadata keyMetadata;
         KeyScaffold.KeyDetail keyDetail;
     }
 
-    struct GenKey{
-        address mythic;
-        address legendary;
-        // address epic;
-    }
-    
-    function fetchKeyByGen(uint keyGen) external view returns(address mythic, address legendary){
-        mythic = keys[keyGen].mythic;
-        legendary = keys[keyGen].legendary;
+    function fetchKeyByGen(uint256 keyGen) external view returns (address legendary, address mythic) {
+        legendary = legendaryKeys[keyGen];
+        mythic = HASHFIT_MYTHIC;
     }
 
-    function setKeyBurner(address _newBurner) external{
+    function setKeyBurner(address _newBurner) external {
         keyBurner = _newBurner;
         emit NewBurnerSet(_newBurner);
     }
 
-    function deployApparelDrop(string memory _uri, HashFit.HashFitDrop memory _setup, GenKey memory mythicKey, GenKey memory legendaryKey) external{
+    function deployHashFitDrop(string memory _uri, HashFit.HashFitDrop memory _setup, GenKeyInfo memory legendaryKey)
+        external
+    {
         HashFit nextGenDrop = new HashFit(_uri, _setup);
-        HashFitMythic nextGenMythicKey = new HashFitMythic(mythicKey.keyMetadata, mythicKey.keyDetail);
         HashFitLegendary nextGenLegendaryKey = new HashFitLegendary(legendaryKey.keyMetadata, legendaryKey.keyDetail);
-        keys[nextGeneration] = HashFit.GenKey({
-            mythic: address(nextGenMythicKey),
-            legendary: address(nextGenLegendaryKey)
-        });
-
+        legendaryKeys[nextGeneration] = address(nextGenLegendaryKey);
+        drop[nextGeneration] = address(nextGenDrop);
         nextGeneration++;
     }
-    
 }
