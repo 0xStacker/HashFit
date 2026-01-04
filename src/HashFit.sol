@@ -9,10 +9,11 @@ import {IHashFitFactory} from "./IHashFitFactory.sol";
 /// @author Ibrahim
 /**
  * A loyalty and identity system for a web3 backed sports wear brand
- *  
- */ 
-
+ *
+ */
 contract HashFit is ERC1155 {
+    // HashFit Factory
+    address private immutable FACTORY;
     // Total unit of items in the drop
     uint64 public immutable TOTAL_SUPPLY;
     // Current Drop Generation
@@ -21,11 +22,9 @@ contract HashFit is ERC1155 {
     uint256 immutable SALE_START_TIME;
     // How long the cyphering stage of drop sale would last
     uint256 immutable CYPHERING_PHASE_DURATION;
-
-    address private immutable FACTORY;
-
+    // SBT uri
     string public contractUri;
-
+    // Unique drop items
     mapping(uint256 => Item) dropItems;
     // Number of items that has been sold in the drop
     uint256 public totalSoldItems;
@@ -38,7 +37,7 @@ contract HashFit is ERC1155 {
         uint64 totalSupply; // How many individual items are in the drop
         uint64 generation; // Drop generation
         uint256 saleStartTime; // When the drop sale begins
-        uint256 cypheringPhaseDuration; // 
+        uint256 cypheringPhaseDuration; //
     }
 
     // Per item details
@@ -60,6 +59,7 @@ contract HashFit is ERC1155 {
     struct Key {
         uint64 keyGen;
         uint64 keyId;
+        bytes32 keyTier;
     }
 
     event PurchaseAndClaim(uint256 item, uint256 amount, bool key);
@@ -75,6 +75,7 @@ contract HashFit is ERC1155 {
     error UnableToTransferKey();
     error KeyMismatch();
     error ExpiredKey(uint256);
+    error NotWhiteListed(); 
     error CannotPurchaseItem(uint256 itemId, uint256 amount);
 
     constructor(string memory _uri, HashFitDrop memory setup) ERC1155(_uri) {
@@ -84,8 +85,12 @@ contract HashFit is ERC1155 {
         CYPHERING_PHASE_DURATION = setup.cypheringPhaseDuration;
     }
 
+    function purchaseAndClaim(SaleItem[] memory _items, bytes32[] memory) external payable {
+        _purchaseAndClaim(_items);
+    }
+
     /// @dev Purchase n units of m items
-    function purchaseAndClaim(SaleItem[] memory _items) external payable {
+    function _purchaseAndClaim(SaleItem[] memory _items) internal {
         if (block.timestamp < SALE_START_TIME) {
             revert SaleNotStarted();
         }
@@ -117,16 +122,23 @@ contract HashFit is ERC1155 {
     }
 
     /// @dev Purchase items from drop using key in a 1:1 format
-    function purchaseWithKey(SaleItem[] memory _items, Key[] memory keys) external {
+    function purchaseWithKey(SaleItem[] memory _items, Key[] memory keys) external virtual{
         // Sanity check
         if (_items.length != keys.length) {
             revert KeyMismatch();
         }
         // Ensure sale has begun
-        if(block.timestamp < SALE_START_TIME){
+        if (block.timestamp < SALE_START_TIME) {
             revert SaleNotStarted();
         }
+        // Fetch the addresses of the legendary key of the required generation
+        // and the mythic key contract
+        (address legendary, address mythic) = IHashFitFactory(FACTORY).fetchKeyByGen(keys[i].keyGen);
+        address keyContract;
+        IHashFitKey key;
+
         for (uint256 i; i < _items.length; i++) {
+            // Make sure item is not sold out
             SaleItem memory currentItem = _items[i];
             if (
                 dropItems[currentItem.itemId].currentSupply + currentItem.amount
@@ -134,14 +146,26 @@ contract HashFit is ERC1155 {
             ) {
                 revert CannotPurchaseItem(currentItem.itemId, currentItem.amount);
             }
-            // Ensure key is valid for use in current generation
-            address keyContract = IHashFitFactory(FACTORY).fetchKeyByGen(keys[i].keyGen);
-            uint keyId = keys[i].keyId;
-            IHashFitKey key = IHashFitKey(keyContract);
-            
-            if (GENERATION - key.generation() < key.keyValidity()) {
-                revert ExpiredKey(keyId);
+            // Use the corressponding key for the next item.
+            uint256 keyId = keys[i].keyId;
+            bytes32 tier = keys[i].keyTier;
+            // (address keyContract, IHashFitKey key) = tier == keccak256(bytes("LEGENDARY")) ? (legendary, IHashFitKey(legendary)):(mythic, IHashFitKey(mythic)) ;
+            if (tier == keccak256(bytes("LEGENDARY"))) {
+                keyContract = legendary;
+                key = IHashFitKey(keyContract);
+                // Check for legendary expiry
+                if (GENERATION - key.generation() < key.keyValidity()) {
+                    revert ExpiredKey(keyId);
+                }
+            } else if (tier == keccak256(bytes("MYTHIC"))) {
+                // No expiry checks as mythic keys don't expire
+                keyContract = mythic;
+                key = IHashFitKey(keyContract);
+            } else {
+                // reject invalid keys e.g epic
+                revert CannotPurchaseItem(currentItem.itemId, currentItem.amount);
             }
+
             // Assert key ownership
             if (IERC721A(keyContract).balanceOf(msg.sender) < 1) {
                 revert InsufficientKeys(keyContract);
