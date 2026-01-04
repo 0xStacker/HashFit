@@ -20,6 +20,6 @@ interface IHashFitKey{
 
     function destroyKey(uint keyId) external;
 
-    function keyTier() external returns(bytes32 memory)
+    function keyTier() external returns(bytes32);
 }
 
