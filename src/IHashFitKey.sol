@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.25;
 
-interface IHashFitKey{
+interface IHashFitKey {
     event DistributeKeys(address indexed receiver, uint256 amount);
     error UnauthorizedAccess();
     error MythicKeyNonTransferrable();
@@ -14,12 +14,12 @@ interface IHashFitKey{
 
     function distributeKeys(Receiver[] memory receivers) external;
 
-    function generation() external returns(uint);
+    function generation() external returns (uint256);
 
-    function keyValidity() external view returns(uint);
+    function keyValidity() external view returns (uint256);
 
-    function destroyKey(uint keyId) external;
+    function destroyKey(uint256 keyId) external;
 
-    function keyTier() external returns(bytes32);
+    function keyTier() external returns (bytes32);
 }
 

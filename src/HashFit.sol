@@ -75,7 +75,7 @@ contract HashFit is ERC1155 {
     error UnableToTransferKey();
     error KeyMismatch();
     error ExpiredKey(uint256);
-    error NotWhiteListed(); 
+    error NotWhiteListed();
     error CannotPurchaseItem(uint256 itemId, uint256 amount);
 
     constructor(string memory _uri, HashFitDrop memory setup) ERC1155(_uri) {
@@ -122,7 +122,7 @@ contract HashFit is ERC1155 {
     }
 
     /// @dev Purchase items from drop using key in a 1:1 format
-    function purchaseWithKey(SaleItem[] memory _items, Key[] memory keys) external virtual{
+    function purchaseWithKey(SaleItem[] memory _items, Key[] memory keys) external virtual {
         // Sanity check
         if (_items.length != keys.length) {
             revert KeyMismatch();

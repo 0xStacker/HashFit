@@ -2,28 +2,35 @@
 pragma solidity ^0.8.25;
 import {HashFit} from "./HashFit.sol";
 import {MerkleProof} from "@openzeppelin/utils/cryptography/MerkleProof.sol";
-contract HashFitExclusive is HashFit{
+
+contract HashFitExclusive is HashFit {
     using MerkleProof for bytes32[];
 
     bytes32 immutable root;
-    constructor(string memory _uri, bytes32 merkleRoot, HashFitDrop memory setup) HashFit(_uri, setup){
+
+    constructor(string memory _uri, bytes32 merkleRoot, HashFitDrop memory setup) HashFit(_uri, setup) {
         root = merkleRoot;
     }
 
-    error NotWhiteListed(); 
-    modifier onlyWhitelist(bytes32[] memory proof){
-        if(!proof.verify(root, keccak256(abi.encode(msg.sender)))){
+    error NotWhiteListed();
+    modifier onlyWhitelist(bytes32[] memory proof) {
+        if (!proof.verify(root, keccak256(abi.encode(msg.sender)))) {
             revert NotWhiteListed();
         }
         _;
     }
 
-    function purchaseAndClaim(SaleItem[] memory _items, bytes32[] memory proof) external payable override onlyWhitelist(proof){
+    function purchaseAndClaim(SaleItem[] memory _items, bytes32[] memory proof)
+        external
+        payable
+        override
+        onlyWhitelist(proof)
+    {
         _purchaseAndClaim(_items);
     }
 
-    function purchaseWithKey(SaleItem[] memory _items, Key[] memory keys) external override{
-         // Sanity check
+    function purchaseWithKey(SaleItem[] memory _items, Key[] memory keys) external override {
+        // Sanity check
         if (_items.length != keys.length) {
             revert KeyMismatch();
         }
@@ -45,7 +52,7 @@ contract HashFitExclusive is HashFit{
                     > dropItems[currentItem.itemId].maxSupply
             ) {
                 revert CannotPurchaseItem(currentItem.itemId, currentItem.amount);
-                }
+            }
             // Use the corresponding key for current item
             uint256 keyId = keys[i].keyId;
             // Assert key ownership
@@ -68,7 +75,7 @@ contract HashFitExclusive is HashFit{
             dropItems[currentItem.itemId].currentSupply += currentItem.amount;
             totalSoldItems += currentItem.amount;
             emit PurchaseAndClaim(currentItem.itemId, currentItem.amount, true);
-            _mint(msg.sender, currentItem.amount, currentItem.itemId, "");           
+            _mint(msg.sender, currentItem.amount, currentItem.itemId, "");
         }
     }
 }
