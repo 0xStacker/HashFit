@@ -2,6 +2,9 @@
 pragma solidity ^0.8.25;
 import {HashFit} from "./HashFit.sol";
 import {MerkleProof} from "@openzeppelin/utils/cryptography/MerkleProof.sol";
+import {IHashFitFactory} from "./IHashFitFactory.sol";
+import {IHashFitKey} from "./IHashFitKey.sol";
+import {IERC721A} from "@ERC721A/IERC721A.sol";
 
 contract HashFitExclusive is HashFit {
     using MerkleProof for bytes32[];
@@ -38,11 +41,10 @@ contract HashFitExclusive is HashFit {
         if (block.timestamp < SALE_START_TIME) {
             revert SaleNotStarted();
         }
-        // Fetch the addresses of the legendary key of the required generation
-        // and the mythic key contract
-        (, address mythic) = IHashFitFactory(FACTORY).fetchKeyByGen(keys[i].keyGen);
+        // Fetch the address of the HashFit mythic key from factory
+        address mythic = IHashFitFactory(FACTORY).mythic();
         address keyContract = mythic;
-        IHashFitKey key = IHashFit(keyContract);
+        IHashFitKey key = IHashFitKey(keyContract);
 
         for (uint256 i; i < _items.length; i++) {
             // Make sure item is not sold out
