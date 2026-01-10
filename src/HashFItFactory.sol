@@ -5,8 +5,8 @@ import {HashFit} from "./HashFit.sol";
 import {KeyScaffold, HashFitMythic, HashFitLegendary, HashFitEpic} from "./HashFitKeys.sol";
 
 contract HashFitFactory is IHashFitFactory {
-    address immutable HASHFIT_MYTHIC;
-    address immutable HASHFIT_EPIC;
+    address internal immutable HASHFIT_MYTHIC;
+    address internal immutable HASHFIT_EPIC;
     address public keyBurner;
     address public crafter;
     address public genesisDrop = drop[0];
@@ -20,9 +20,8 @@ contract HashFitFactory is IHashFitFactory {
         KeyScaffold.KeyDetail keyDetail;
     }
 
-    function fetchKeyByGen(uint256 keyGen) external view returns (address legendary, address mythic) {
-        legendary = legendaryKeys[keyGen];
-        mythic = HASHFIT_MYTHIC;
+    function fetchKeyByGen(uint256 keyGen) external view returns (address _legendary) {
+        _legendary = legendaryKeys[keyGen];
     }
 
     function setKeyBurner(address _newBurner) external {
@@ -38,5 +37,13 @@ contract HashFitFactory is IHashFitFactory {
         legendaryKeys[nextGeneration] = address(nextGenLegendaryKey);
         drop[nextGeneration] = address(nextGenDrop);
         nextGeneration++;
+    }
+
+    function mythic() public view returns(address){
+        return HASHFIT_MYTHIC;
+    }
+
+    function epic() public view returns(address){
+        return HASHFIT_EPIC;
     }
 }
