@@ -12,10 +12,11 @@ import {IHashFitFactory} from "./IHashFitFactory.sol";
  *
  */
 contract HashFit is ERC1155 {
+    uint16 internal constant BPS = 10_000; // BPS value for % calculations 
     // HashFit Factory
-    address private immutable FACTORY;
+    address internal immutable FACTORY;
     // Total unit of items in the drop
-    uint64 public immutable TOTAL_SUPPLY;
+    uint64 public totalSupply;
     // Current Drop Generation
     uint64 public immutable GENERATION;
     // Time when drop sale begins
@@ -44,6 +45,7 @@ contract HashFit is ERC1155 {
     struct Item {
         uint64 maxSupply; // Total units of an item present in the drop
         uint64 currentSupply; // Total number of an item that has been sold
+        uint64 discount; // Percentage discount applied
         uint256 price; // Selling price of a unit of an item
         string name; // Item name
         string uri; // Item uri
@@ -79,7 +81,7 @@ contract HashFit is ERC1155 {
     error CannotPurchaseItem(uint256 itemId, uint256 amount);
 
     constructor(string memory _uri, HashFitDrop memory setup) ERC1155(_uri) {
-        TOTAL_SUPPLY = setup.totalSupply;
+        totalSupply = setup.totalSupply;
         GENERATION = setup.generation;
         SALE_START_TIME = setup.saleStartTime;
         CYPHERING_PHASE_DURATION = setup.cypheringPhaseDuration;
@@ -94,7 +96,7 @@ contract HashFit is ERC1155 {
         if (block.timestamp < SALE_START_TIME) {
             revert SaleNotStarted();
         }
-        if (totalSoldItems + _items.length > TOTAL_SUPPLY) {
+        if (totalSoldItems + _items.length > totalSupply) {
             revert NotEnoughItems();
         }
 
@@ -109,7 +111,10 @@ contract HashFit is ERC1155 {
             ) {
                 revert CannotPurchaseItem(currentItem.itemId, currentItem.amount);
             }
-            totalCost += dropItems[currentItem.itemId].price * currentItem.amount;
+            uint64 discount = dropItems[currentItem.itemId].discount;
+            uint256 price = dropItems[currentItem.itemId].price;
+            uint256 amount = currentItem.amount;
+            totalCost += discount > 0 ? (price * amount * discount) / BPS : price * amount; 
             if (msg.value < totalCost) {
                 revert InsufficientFund();
             }
@@ -133,11 +138,13 @@ contract HashFit is ERC1155 {
         }
         // Fetch the addresses of the legendary key of the required generation
         // and the mythic key contract
-        (address legendary, address mythic) = IHashFitFactory(FACTORY).fetchKeyByGen(keys[i].keyGen);
+        
         address keyContract;
         IHashFitKey key;
+        address mythic = IHashFitFactory(FACTORY).mythic();
 
         for (uint256 i; i < _items.length; i++) {
+            address legendary = IHashFitFactory(FACTORY).fetchKeyByGen(keys[i].keyGen);
             // Make sure item is not sold out
             SaleItem memory currentItem = _items[i];
             if (
@@ -188,6 +195,16 @@ contract HashFit is ERC1155 {
             emit PurchaseAndClaim(currentItem.itemId, currentItem.amount, true);
             _mint(msg.sender, currentItem.amount, currentItem.itemId, "");
         }
+    }
+
+    // ADMIN GATED FUNCTIONS
+    function restock(uint8 itemId, uint64 restockAmount) external {
+        dropItems[itemId].maxSupply = restockAmount;
+        totalSupply += restockAmount;
+    }
+
+    function setDiscount(uint8 itemId, uint64 discountBps) external{
+        dropItems[itemId].discount = discountBps;
     }
 
     function uri(uint256 itemId) public view override returns (string memory) {
