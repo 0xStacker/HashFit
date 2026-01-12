@@ -50,7 +50,7 @@ contract HashFitExclusive is HashFit {
             // Make sure item is not sold out
             SaleItem memory currentItem = _items[i];
             if (
-                dropItems[currentItem.itemId].currentSupply + currentItem.amount
+                currentSupply[currentItem.itemId] + currentItem.amount
                     > dropItems[currentItem.itemId].maxSupply
             ) {
                 revert CannotPurchaseItem(currentItem.itemId, currentItem.amount);
@@ -74,7 +74,7 @@ contract HashFitExclusive is HashFit {
                 revert UnableToTransferKey();
             }
 
-            dropItems[currentItem.itemId].currentSupply += currentItem.amount;
+            currentSupply[currentItem.itemId] += currentItem.amount;
             totalSoldItems += currentItem.amount;
             emit PurchaseAndClaim(currentItem.itemId, currentItem.amount, true);
             _mint(msg.sender, currentItem.amount, currentItem.itemId, "");
