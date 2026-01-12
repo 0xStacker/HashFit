@@ -74,7 +74,7 @@ abstract contract KeyScaffold is ERC721A, IHashFitKey {
     }
 
     /// @dev The drop generation in which key was created.
-    function generation() external view returns (uint256 gen) {
+    function generation() external view virtual returns (uint256 gen) {
         gen = GENERATION;
     }
 
@@ -117,6 +117,10 @@ contract HashFitMythic is KeyScaffold {
 
     function keyTier() external pure override returns (bytes32) {
         return TIER;
+    }
+
+    function generation() external pure override returns(uint){
+        return 0;
     }
 }
 
