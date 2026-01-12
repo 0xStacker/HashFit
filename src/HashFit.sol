@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+ // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.25;
 import {ERC1155} from "@openzeppelin/token/ERC1155/ERC1155.sol";
 import {IHashFitKey} from "./IHashFitKey.sol";
@@ -25,8 +25,12 @@ contract HashFit is ERC1155 {
     uint256 immutable CYPHERING_PHASE_DURATION;
     // SBT uri
     string public contractUri;
+    // Unique HashFit items
+    Item[] internal hashFitItems; 
     // Unique drop items
     mapping(uint256 => Item) dropItems;
+
+    mapping(uint256 => uint256) public currentSupply;
     // Number of items that has been sold in the drop
     uint256 public totalSoldItems;
 
@@ -39,12 +43,12 @@ contract HashFit is ERC1155 {
         uint64 generation; // Drop generation
         uint256 saleStartTime; // When the drop sale begins
         uint256 cypheringPhaseDuration; //
+        Item[] items;
     }
 
     // Per item details
     struct Item {
         uint64 maxSupply; // Total units of an item present in the drop
-        uint64 currentSupply; // Total number of an item that has been sold
         uint64 discount; // Percentage discount applied
         uint256 price; // Selling price of a unit of an item
         string name; // Item name
@@ -77,7 +81,6 @@ contract HashFit is ERC1155 {
     error UnableToTransferKey();
     error KeyMismatch();
     error ExpiredKey(uint256);
-    error NotWhiteListed();
     error CannotPurchaseItem(uint256 itemId, uint256 amount);
 
     constructor(string memory _uri, HashFitDrop memory setup) ERC1155(_uri) {
@@ -85,9 +88,13 @@ contract HashFit is ERC1155 {
         GENERATION = setup.generation;
         SALE_START_TIME = setup.saleStartTime;
         CYPHERING_PHASE_DURATION = setup.cypheringPhaseDuration;
+        for(uint i; i < setup.items.length; i++){
+            dropItems[i] = setup.items[i];
+            hashFitItems.push(setup.items[i]);
+        }
     }
 
-    function purchaseAndClaim(SaleItem[] memory _items, bytes32[] memory) external payable {
+    function purchaseAndClaim(SaleItem[] memory _items, bytes32[] memory) external virtual payable {
         _purchaseAndClaim(_items);
     }
 
@@ -106,7 +113,7 @@ contract HashFit is ERC1155 {
             SaleItem memory currentItem = _items[i];
 
             if (
-                dropItems[currentItem.itemId].currentSupply + currentItem.amount
+                currentSupply[currentItem.itemId] + currentItem.amount
                     > dropItems[currentItem.itemId].maxSupply
             ) {
                 revert CannotPurchaseItem(currentItem.itemId, currentItem.amount);
@@ -119,7 +126,7 @@ contract HashFit is ERC1155 {
                 revert InsufficientFund();
             }
 
-            dropItems[currentItem.itemId].currentSupply += currentItem.amount;
+            currentSupply[currentItem.itemId] += currentItem.amount;
             totalSoldItems += currentItem.amount;
             emit PurchaseAndClaim(currentItem.itemId, currentItem.amount, false);
             _mint(msg.sender, currentItem.amount, currentItem.itemId, "");
@@ -148,7 +155,7 @@ contract HashFit is ERC1155 {
             // Make sure item is not sold out
             SaleItem memory currentItem = _items[i];
             if (
-                dropItems[currentItem.itemId].currentSupply + currentItem.amount
+                currentSupply[currentItem.itemId] + currentItem.amount
                     > dropItems[currentItem.itemId].maxSupply
             ) {
                 revert CannotPurchaseItem(currentItem.itemId, currentItem.amount);
@@ -190,7 +197,7 @@ contract HashFit is ERC1155 {
                 revert UnableToTransferKey();
             }
 
-            dropItems[currentItem.itemId].currentSupply += currentItem.amount;
+            currentSupply[currentItem.itemId] += currentItem.amount;
             totalSoldItems += currentItem.amount;
             emit PurchaseAndClaim(currentItem.itemId, currentItem.amount, true);
             _mint(msg.sender, currentItem.amount, currentItem.itemId, "");
@@ -214,9 +221,13 @@ contract HashFit is ERC1155 {
         return dropItems[itemId].uri;
     }
 
+    function items() external returns(Item[] memory){
+        return hashFitItems;
+    }
+
     /// @dev Number of units of an item remaining in the drop
     function itemsLeft(uint256 itemId) external view returns (uint256) {
-        return dropItems[itemId].maxSupply - dropItems[itemId].currentSupply;
+        return dropItems[itemId].maxSupply - currentSupply[itemId];
     }
 
     function _itemExists(uint256 itemId) internal view returns (bool) {
