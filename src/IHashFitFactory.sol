@@ -8,4 +8,6 @@ interface IHashFitFactory {
     function epic() external returns(address);
 
     event NewBurnerSet(address newBurner);
+    event ItemRestocked(uint, uint);
+    event SetDiscount(uint64, uint8, uint64);
 }
