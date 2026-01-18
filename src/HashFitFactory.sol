@@ -54,6 +54,18 @@ contract HashFitFactory is IHashFitFactory {
         return nextGenDrop;
     }
 
+    function restock(uint64 gen, uint8 itemId, uint64 restockAmount) external {
+        HashFit drop = HashFit(drop[gen]);
+        drop.restock(itemId, restockAmount);
+        emit RestockItem(gen, itemId, restockAmount);
+    }
+
+    function setDiscount(uint64 gen, uint8 itemId, uint64 discountBps) external {
+        HashFit drop = HashFit(drop[gen]);
+        drop.setDiscount(itemId, discountBps);
+        emit SetDiscount(gen, itemId, discountBps)
+    }
+
     function mythic() public view returns(address){
         return HASHFIT_MYTHIC;
     }
