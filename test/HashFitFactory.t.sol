@@ -49,12 +49,15 @@ contract FactoryTest is Test{
         console.log("Setup complete");
         assertEq(factory.mythic(), address(mythicKey));
         assertEq(factory.epic(), address(epicKey));
+        for(uint i; i < 3; i++){
+            _items.push();
+        } 
     }
 
     /// @dev Setup legendary key
     /// @param _validity is how long key is valid for
     /// @param _gen is the generation of creation 
-    function _buildLegendary(uint64 _gen, uint8 _validity) internal returns (HashFitFactory.GenKeyInfo memory leggy){
+    function _buildLegendary(uint64 _gen, uint8 _validity) internal pure returns (HashFitFactory.GenKeyInfo memory leggy){
         KeyScaffold.Metadata memory metadata = KeyScaffold.Metadata({name: "LEGENDARY",
         symbol: "LEGENDARY",
         uri: "https://legendary-key"});
@@ -96,14 +99,18 @@ contract FactoryTest is Test{
         drop = factory.deployHashFitDrop(contractURI, dropSetup, leggyKey);
     }
 
-    function testDeployHashFit() public {
-        for(uint i; i < 3; i++){
-            _items.push();
-        }    
-        HashFit drop = _deployHashFit(_items, _buildLegendary(nextGen, 3));
+    function testDeployHashFit() public returns(HashFit drop){   
+        drop = _deployHashFit(_items, _buildLegendary(nextGen, 3));
         assertEq(factory.mythic(), address(mythicKey));
         assertEq(factory.epic(), address(epicKey));
         assertEq(factory.keyBurner(), address(burner));
         assertNotEq(factory.fetchKeyByGen(0), address(0));
+    }
+
+    function testSetBurner() public {
+        HashFit drop = testDeployHashFit();
+        KeyBurner newBurner = new KeyBurner();
+        factory.setKeyBurner(address(newBurner));
+        assertEq(factory.keyBurner(), address(newBurner));
     }
 }
