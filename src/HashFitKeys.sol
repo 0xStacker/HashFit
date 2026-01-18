@@ -47,7 +47,7 @@ abstract contract KeyScaffold is ERC721A, IHashFitKey {
     // Factory priviledge calls
     modifier onlyFactory() {
         if (msg.sender != FACTORY) {
-            revert IHashFitKey.UnauthorizedAccess();
+            revert UnauthorizedAccess();
         }
         _;
     }
