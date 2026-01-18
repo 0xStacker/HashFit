@@ -6,7 +6,7 @@ import {IERC721A} from "@ERC721A/IERC721A.sol";
 import {IHashFitFactory} from "./IHashFitFactory.sol";
 
 /// @title HashFit Apparel Drop
-/// @author Ibrahim
+/// @author Ibrahim 🐸
 /**
  * A loyalty and identity system for a web3 backed sports wear brand
  *
@@ -72,6 +72,7 @@ contract HashFit is ERC1155 {
     event RedeemKey(address redeemer, uint256 keyGen, uint256 keyId);
 
     error SaleNotStarted();
+    error UnauthorizedAccess();
     error NonTransferrable();
     error NotEnoughItems();
     error InsufficientFund();
@@ -94,9 +95,17 @@ contract HashFit is ERC1155 {
         }
     }
 
+    modifier onlyFactory{
+        if(msg.sender != FACTORY){
+            revert UnauthorizedAccess();
+        }
+        _;
+    }
+
     function purchaseAndClaim(SaleItem[] memory _items, bytes32[] memory) external virtual payable {
         _purchaseAndClaim(_items);
     }
+
 
     /// @dev Purchase n units of m items
     function _purchaseAndClaim(SaleItem[] memory _items) internal {
@@ -205,12 +214,12 @@ contract HashFit is ERC1155 {
     }
 
     // ADMIN GATED FUNCTIONS
-    function restock(uint8 itemId, uint64 restockAmount) external {
+    function restock(uint8 itemId, uint64 restockAmount) external onlyFactory{
         dropItems[itemId].maxSupply = restockAmount;
         totalSupply += restockAmount;
     }
 
-    function setDiscount(uint8 itemId, uint64 discountBps) external{
+    function setDiscount(uint8 itemId, uint64 discountBps) external onlyFactory{
         dropItems[itemId].discount = discountBps;
     }
 
@@ -221,7 +230,7 @@ contract HashFit is ERC1155 {
         return dropItems[itemId].uri;
     }
 
-    function items() external returns(Item[] memory){
+    function items() external view returns(Item[] memory){
         return hashFitItems;
     }
 
