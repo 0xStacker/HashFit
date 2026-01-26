@@ -1,12 +1,13 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.25;
+import {HashFitTypes} from "./Types.sol";
 import {ERC721A} from "@ERC721A/ERC721A.sol";
-import {IHashFitKey} from "./IHashFitKey.sol";
+import {IHashFitKey} from "./interfaces/IHashFitKey.sol";
 
 /**
  * @title HashFit Keys
- * @author Ibrahim
- * HashFit keys are NFTs used to unlock exclusive perks for owner.
+ * @author Ibrahim 🐸
+ * HashFit keys are NFT collectibles used to unlock exclusive perks for owner.
  * There are 3 different key tiers:
  *     - Mythic
  *     - Legendary
@@ -17,42 +18,30 @@ abstract contract KeyScaffold is ERC721A, IHashFitKey {
     // How many generations key is valid for
     uint8 private immutable KEY_VALIDITY;
     // Factory address
-    address internal immutable FACTORY;
+    address internal immutable ADMIN;
     // Generation in which key was created
     uint64 private immutable GENERATION;
     // Base uri
     string public baseURI;
 
-    constructor(Metadata memory _keyMetaData, KeyDetail memory _keydetail)
+    constructor(HashFitTypes.Metadata memory _keyMetaData, HashFitTypes.KeyDetail memory _keydetail, address _admin)
         ERC721A(_keyMetaData.name, _keyMetaData.symbol)
     {
-        FACTORY = msg.sender;
+        ADMIN = _admin;
         baseURI = _keyMetaData.uri;
         KEY_VALIDITY = _keydetail.validity;
         GENERATION = _keydetail.generation;
     }
 
-    // Key Metadata
-    struct Metadata {
-        string name;
-        string symbol;
-        string uri;
-    }
-
-    struct KeyDetail {
-        uint8 validity; // How many  generation key is valid for use
-        uint64 generation; // Generation which key was created
-    }
-
-    // Factory priviledge calls
-    modifier onlyFactory() {
-        if (msg.sender != FACTORY) {
+    // admin priviledge calls
+    modifier onlyAdmin() {
+        if (msg.sender != ADMIN) {
             revert UnauthorizedAccess();
         }
         _;
     }
 
-    // Owner priviledged calls
+    // Owner priviledge calls
     modifier onlyOwner(uint256 tokenId) {
         if (msg.sender != ownerOf(tokenId)) {
             revert UnauthorizedAccess();
@@ -66,7 +55,7 @@ abstract contract KeyScaffold is ERC721A, IHashFitKey {
     }
 
     /// @dev admin gated function used for manual key distribution.
-    function distributeKeys(Receiver[] memory receivers) external onlyFactory {
+    function distributeKeys(HashFitTypes.Receiver[] memory receivers) external onlyAdmin{
         for (uint256 i; i < receivers.length; i++) {
             _mint(receivers[i].receiverAddress, receivers[i].amount);
             emit DistributeKeys(receivers[i].receiverAddress, receivers[i].amount);
@@ -81,12 +70,19 @@ abstract contract KeyScaffold is ERC721A, IHashFitKey {
     /// @dev The time frame for which key usage is valid.
     /// @notice a validity of 0 means key cannot expire (Mythic tier keys)
     /// @notice a validity of n (n >= 1) means keys are valid for the next n drops.
-    function keyValidity() external view returns (uint256 validity) {
-        validity = KEY_VALIDITY;
+    function validity() external view returns (uint256 _validity) {
+        _validity = KEY_VALIDITY;
     }
 
+    /// @dev returns tier of the key
+    /// Mythic > Legendary > Epic
     function keyTier() external virtual returns (bytes32) {
         return keccak256(bytes("KEY TIER"));
+    }
+
+    /// @dev All tokens return the same URI which is the image representation of the key
+    function tokenURI(uint) public view override returns(string memory){
+        return baseURI;
     }
 
     // keyId starts from 1
@@ -98,9 +94,9 @@ abstract contract KeyScaffold is ERC721A, IHashFitKey {
         return baseURI;
     }
 
-    /// @dev Destroys a key from existence.
-    function destroyKey(uint256 tokenId) external onlyOwner(tokenId) {
-        _burn(tokenId);
+    /// @dev Destroys keyId from existence.
+    function destroyKey(uint256 keyId) external onlyOwner(keyId) {
+        _burn(keyId);
     }
 }
 
@@ -111,9 +107,9 @@ abstract contract KeyScaffold is ERC721A, IHashFitKey {
 ///       - Can be redeemed for an item in a mythic tier (exclusive) apparel drops
 ///       - Can be redeemed for exclusive irl perks (future updates)
 contract HashFitMythic is KeyScaffold {
-    bytes32 internal constant TIER = keccak256(bytes("MYTHIC"));
+    bytes32 internal constant TIER = keccak256("MYTHIC");
 
-    constructor(Metadata memory _keyMetaData, KeyDetail memory _keyDetail) KeyScaffold(_keyMetaData, _keyDetail) {}
+    constructor(HashFitTypes.Metadata memory _keyMetaData, HashFitTypes.KeyDetail memory _keyDetail, address _admin) KeyScaffold(_keyMetaData, _keyDetail, _admin) {}
 
     function keyTier() external pure override returns (bytes32) {
         return TIER;
@@ -130,8 +126,8 @@ contract HashFitMythic is KeyScaffold {
 ///        - Can be used to purchase an item in Legendary tier apparel drops or lower
 ///        - Expires if not used within the time frame for which its usage is valid
 contract HashFitLegendary is KeyScaffold {
-    bytes32 internal constant TIER = keccak256(bytes("LEGENDARY"));
-    constructor(Metadata memory _keyMetaData, KeyDetail memory _keyDetail) KeyScaffold(_keyMetaData, _keyDetail) {}
+    bytes32 internal constant TIER = keccak256("LEGENDARY");
+    constructor(HashFitTypes.Metadata memory _keyMetaData, HashFitTypes.KeyDetail memory _keyDetail, address _admin) KeyScaffold(_keyMetaData, _keyDetail, _admin) {}
 
     function keyTier() external pure override returns (bytes32) {
         return TIER;
@@ -139,8 +135,8 @@ contract HashFitLegendary is KeyScaffold {
 }
 
 contract HashFitEpic is KeyScaffold {
-    bytes32 internal constant TIER = keccak256(bytes("EPIC"));
-    constructor(Metadata memory _keyMetaData, KeyDetail memory _keyDetail) KeyScaffold(_keyMetaData, _keyDetail) {}
+    bytes32 internal constant TIER = keccak256("EPIC");
+    constructor(HashFitTypes.Metadata memory _keyMetaData, HashFitTypes.KeyDetail memory _keyDetail, address _admin) KeyScaffold(_keyMetaData, _keyDetail, _admin) {}
 
     function keyTier() external pure override returns (bytes32) {
         return TIER;
