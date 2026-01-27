@@ -1,9 +1,12 @@
  // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.25;
+import {HashFitTypes} from "./Types.sol";
+import {IHashFitErrors} from "./interfaces/IHashFitErrors.sol";
 import {ERC1155} from "@openzeppelin/token/ERC1155/ERC1155.sol";
-import {IHashFitKey} from "./IHashFitKey.sol";
+import {IHashFitKey} from "./interfaces/IHashFitKey.sol";
 import {IERC721A} from "@ERC721A/IERC721A.sol";
-import {IHashFitFactory} from "./IHashFitFactory.sol";
+import {IHashFitFactory} from "./interfaces/IHashFitFactory.sol";
+import {HashFitLegendary, HashFitMythic} from "./HashFitKeys.sol";
 
 /// @title HashFit Apparel Drop
 /// @author Ibrahim 🐸
@@ -11,10 +14,12 @@ import {IHashFitFactory} from "./IHashFitFactory.sol";
  * A loyalty and identity system for a web3 backed sports wear brand
  *
  */
-contract HashFit is ERC1155 {
+contract HashFitCore is ERC1155, IHashFitErrors{
     uint16 internal constant BPS = 10_000; // BPS value for % calculations 
     // HashFit Factory
-    address internal immutable FACTORY;
+    address internal immutable ADMIN;
+
+    IHashFitFactory FACTORY;
     // Total unit of items in the drop
     uint64 public totalSupply;
     // Current Drop Generation
@@ -26,89 +31,54 @@ contract HashFit is ERC1155 {
     // SBT uri
     string public contractUri;
     // Unique HashFit items
-    Item[] internal hashFitItems; 
+    HashFitTypes.Item[] internal hashFitItems; 
     // Unique drop items
-    mapping(uint256 => Item) dropItems;
+    mapping(uint256 => HashFitTypes.Item) dropItems;
 
     mapping(uint256 => uint256) public currentSupply;
     // Number of items that has been sold in the drop
     uint256 public totalSoldItems;
 
-    // Holds required data for an apparel drop
-    // Cyphering phase is a special limited sale phase at the begining of the drop
-    // Purchasing an item within this phase would allow buyer wallet to be collected and considered
-    // for random HashFit keys distribution offchain
-    struct HashFitDrop {
-        uint64 totalSupply; // How many individual items are in the drop
-        uint64 generation; // Drop generation
-        uint256 saleStartTime; // When the drop sale begins
-        uint256 cypheringPhaseDuration; //
-        Item[] items;
-    }
 
-    // Per item details
-    struct Item {
-        uint64 maxSupply; // Total units of an item present in the drop
-        uint64 discount; // Percentage discount applied
-        uint256 price; // Selling price of a unit of an item
-        string name; // Item name
-        string uri; // Item uri
-    }
-
-    // Item purchase details
-    struct SaleItem {
-        uint8 itemId; // Unique item identifier
-        uint64 amount; // Unit of item being purchased
-    }
-
-    // HashFit key details
-    struct Key {
+    // HashFit key
+    struct KeyInfo{
         uint64 keyGen;
         uint64 keyId;
         bytes32 keyTier;
     }
 
-    event PurchaseAndClaim(uint256 item, uint256 amount, bool key);
-    event RedeemKey(address redeemer, uint256 keyGen, uint256 keyId);
-
-    error SaleNotStarted();
-    error UnauthorizedAccess();
-    error NonTransferrable();
-    error NotEnoughItems();
-    error InsufficientFund();
-    error UriRequestForNonExistentToken();
-    error InsufficientKeys(address);
-    error UnauthorizedKeyUsage(uint256, uint256);
-    error UnableToTransferKey();
-    error KeyMismatch();
-    error ExpiredKey(uint256);
-    error CannotPurchaseItem(uint256 itemId, uint256 amount);
-
-    constructor(string memory _uri, HashFitDrop memory setup) ERC1155(_uri) {
+    constructor(string memory _uri, HashFitTypes.HashFitDrop memory setup, address _admin) ERC1155(_uri) {
+        // Configure drop 
         totalSupply = setup.totalSupply;
         GENERATION = setup.generation;
         SALE_START_TIME = setup.saleStartTime;
         CYPHERING_PHASE_DURATION = setup.cypheringPhaseDuration;
+        ADMIN = _admin;
+        FACTORY = IHashFitFactory(msg.sender);
         for(uint i; i < setup.items.length; i++){
             dropItems[i] = setup.items[i];
             hashFitItems.push(setup.items[i]);
         }
     }
 
-    modifier onlyFactory{
-        if(msg.sender != FACTORY){
+    // Enforce factory priviledges
+    modifier onlyAdmin{
+        if(msg.sender != ADMIN){
             revert UnauthorizedAccess();
         }
         _;
     }
 
-    function purchaseAndClaim(SaleItem[] memory _items, bytes32[] memory) external virtual payable {
+    /// @dev Purchase an item from drop and claim identity SBT
+    /// @param _items is the list of all items to be purchased
+
+    function purchaseAndClaim(HashFitTypes.SaleItem[] memory _items, bytes32[] memory) external virtual payable {
         _purchaseAndClaim(_items);
     }
 
 
     /// @dev Purchase n units of m items
-    function _purchaseAndClaim(SaleItem[] memory _items) internal {
+    function _purchaseAndClaim(HashFitTypes.SaleItem[] memory _items) internal {
         if (block.timestamp < SALE_START_TIME) {
             revert SaleNotStarted();
         }
@@ -119,7 +89,7 @@ contract HashFit is ERC1155 {
         uint256 totalCost;
         // Handle sale of all items requested.
         for (uint8 i; i < _items.length; i++) {
-            SaleItem memory currentItem = _items[i];
+            HashFitTypes.SaleItem memory currentItem = _items[i];
 
             if (
                 currentSupply[currentItem.itemId] + currentItem.amount
@@ -143,7 +113,7 @@ contract HashFit is ERC1155 {
     }
 
     /// @dev Purchase items from drop using key in a 1:1 format
-    function purchaseWithKey(SaleItem[] memory _items, Key[] memory keys) external virtual {
+    function purchaseWithKey(HashFitTypes.SaleItem[] memory _items, KeyInfo[] memory keys) external virtual {
         // Sanity check
         if (_items.length != keys.length) {
             revert KeyMismatch();
@@ -152,48 +122,42 @@ contract HashFit is ERC1155 {
         if (block.timestamp < SALE_START_TIME) {
             revert SaleNotStarted();
         }
-        // Fetch the addresses of the legendary key of the required generation
-        // and the mythic key contract
-        
+
         address keyContract;
         IHashFitKey key;
-        address mythic = IHashFitFactory(FACTORY).mythic();
 
+        // Non changing mythic key contract
+        HashFitMythic mythic = FACTORY.mythic();
+        
         for (uint256 i; i < _items.length; i++) {
-            address legendary = IHashFitFactory(FACTORY).fetchKeyByGen(keys[i].keyGen);
-            // Make sure item is not sold out
-            SaleItem memory currentItem = _items[i];
-            if (
-                currentSupply[currentItem.itemId] + currentItem.amount
-                    > dropItems[currentItem.itemId].maxSupply
-            ) {
+            // Fetch key address by generation
+            HashFitLegendary legendary = FACTORY.fetchKeyByGen(keys[i].keyGen);
+            HashFitTypes.SaleItem memory currentItem = _items[i];
+            // Make sure item is not sold out and the purchase amount does not exceed item supply
+            if (!_canPurchase(currentItem)){
                 revert CannotPurchaseItem(currentItem.itemId, currentItem.amount);
             }
             // Use the corressponding key for the next item.
             uint256 keyId = keys[i].keyId;
             bytes32 tier = keys[i].keyTier;
             // (address keyContract, IHashFitKey key) = tier == keccak256(bytes("LEGENDARY")) ? (legendary, IHashFitKey(legendary)):(mythic, IHashFitKey(mythic)) ;
-            if (tier == keccak256(bytes("LEGENDARY"))) {
-                keyContract = legendary;
-                key = IHashFitKey(keyContract);
+            if (tier == keccak256("LEGENDARY")) {
+                keyContract = address(legendary);
+                key = legendary;
                 // Check for legendary expiry
-                if (GENERATION - key.generation() < key.keyValidity()) {
+                if (GENERATION - key.generation() < key.validity()) {
                     revert ExpiredKey(keyId);
                 }
-            } else if (tier == keccak256(bytes("MYTHIC"))) {
+            } else if (tier == keccak256("MYTHIC")) {
                 // No expiry checks as mythic keys don't expire
-                keyContract = mythic;
-                key = IHashFitKey(keyContract);
+                keyContract = address(mythic);
+                key = mythic;
             } else {
                 // reject invalid keys e.g epic
                 revert CannotPurchaseItem(currentItem.itemId, currentItem.amount);
             }
 
             // Assert key ownership
-            if (IERC721A(keyContract).balanceOf(msg.sender) < 1) {
-                revert InsufficientKeys(keyContract);
-            }
-
             if (msg.sender != IERC721A(keyContract).ownerOf(keyId)) {
                 revert UnauthorizedKeyUsage(keys[i].keyGen, keyId);
             }
@@ -213,16 +177,36 @@ contract HashFit is ERC1155 {
         }
     }
 
+    /// @dev Checks whether an item can be purchased without exceeding its current max supply
+    function _canPurchase(HashFitTypes.SaleItem memory item) internal view returns(bool){
+        if (
+            currentSupply[item.itemId] + item.amount
+                > dropItems[item.itemId].maxSupply
+        ) {
+            return false;
+        }
+        return true;
+    }
+
     // ADMIN GATED FUNCTIONS
-    function restock(uint8 itemId, uint64 restockAmount) external onlyFactory{
-        dropItems[itemId].maxSupply = restockAmount;
+    /// @dev Restocks a particular drop item 
+    /// @param itemId is the identifier of the item to restock
+    /// @param restockAmount is the amount of that item that is to be restocked
+    /// NB: Restock can only be done through factory by an authorized admin
+    function restock(uint8 itemId, uint64 restockAmount) external onlyAdmin{
+        dropItems[itemId].maxSupply += restockAmount;
         totalSupply += restockAmount;
     }
 
-    function setDiscount(uint8 itemId, uint64 discountBps) external onlyFactory{
+    /// @dev Applies discount to a particular drop item
+    /// @param itemId is the identifier of the item for which discount is to be applied
+    /// @param discountBps defines the percentage of discount to be applied. (100bps = 1%)
+    /// NB: Discount can only be set through factory by an authorized admin
+    function setDiscount(uint8 itemId, uint64 discountBps) external onlyAdmin{
         dropItems[itemId].discount = discountBps;
     }
 
+    /// @dev fetches the URI for an item
     function uri(uint256 itemId) public view override returns (string memory) {
         if (!_itemExists(itemId)) {
             revert UriRequestForNonExistentToken();
@@ -230,7 +214,8 @@ contract HashFit is ERC1155 {
         return dropItems[itemId].uri;
     }
 
-    function items() external view returns(Item[] memory){
+    /// @dev getter for all unique drop items
+    function items() external view returns(HashFitTypes.Item[] memory){
         return hashFitItems;
     }
 
@@ -238,7 +223,8 @@ contract HashFit is ERC1155 {
     function itemsLeft(uint256 itemId) external view returns (uint256) {
         return dropItems[itemId].maxSupply - currentSupply[itemId];
     }
-
+    
+    /// @dev Checks if an item exists in the drop
     function _itemExists(uint256 itemId) internal view returns (bool) {
         return dropItems[itemId].maxSupply != 0;
     }
