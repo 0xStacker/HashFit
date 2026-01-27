@@ -1,76 +1,86 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.25;
-import {IHashFitFactory} from "./IHashFitFactory.sol";
-import {HashFit} from "./HashFit.sol";
+import {HashFitTypes} from "./Types.sol"; 
+import {IHashFitFactory} from "./interfaces/IHashFitFactory.sol";
+import {HashFitCore} from "./HashFit.sol";
 import {KeyScaffold, HashFitMythic, HashFitLegendary, HashFitEpic} from "./HashFitKeys.sol";
+import {KeyBurner} from "./KeyBurner.sol";
 
 contract HashFitFactory is IHashFitFactory {
-    address internal immutable HASHFIT_MYTHIC;
-    address internal immutable HASHFIT_EPIC;
+    /// @dev The key burner contract
     address public keyBurner;
-    address public crafter;
-    uint256 internal nextGeneration;
+    /// @dev Non changing mythic key contract deployed with the factory
+    HashFitMythic internal immutable MYTHIC;
+    /// @dev Non changing epic key contract deployed with the factory
+    HashFitEpic internal immutable EPIC;
+    /// @dev Admin who controls the entire factory
+    /// @notice All administrative function accross all HashFit contract managed by ADMIN
+    /// Check {HashFitAdmin} to see all administrative functions 
+    address private immutable ADMIN;
+    /// Next generation of drop waiting to be deployed
+    uint256 public nextGen;
 
-    mapping(uint256 keyGen => address) internal legendaryKeys;
-    mapping(uint256 drop => address) public drop;
+    mapping(uint256 keyGen => HashFitLegendary) internal legendaryKeys;
+    mapping(uint256 drop => HashFitCore) public drop;
 
-    struct FactorySetup{
-        address epic;
-        address mythic;
-        address burner;
-    }
-    constructor(FactorySetup memory setup){
-        HASHFIT_EPIC = setup.epic;
-        HASHFIT_MYTHIC = setup.mythic;
-        keyBurner = setup.burner;
-    }
-
-    struct GenKeyInfo {
-        KeyScaffold.Metadata keyMetadata;
-        KeyScaffold.KeyDetail keyDetail;
-    }
-
-    function fetchKeyByGen(uint256 keyGen) external view returns (address _legendary) {
-        _legendary = legendaryKeys[keyGen];
-    }
-
-    function setKeyBurner(address _newBurner) external {
-        keyBurner = _newBurner;
-        emit NewBurnerSet(_newBurner);
+    error UnauthorizedAccess();
+    // Emitted when a drop is created
+    event CreateDrop(address indexed _drop, uint gen);
+    
+    /// @dev Initialize factory as necessary
+    constructor(HashFitTypes.FactorySetup memory setup){
+        EPIC = new HashFitEpic(setup.epic.keyMetadata, setup.epic.keyDetail, msg.sender);
+        MYTHIC = new HashFitMythic(setup.mythic.keyMetadata, setup.mythic.keyDetail, msg.sender);
+        keyBurner = address(new KeyBurner());
+        ADMIN = msg.sender;
     }
 
-    function genesis() external view returns(address){
+    modifier onlyAdmin{
+        if(msg.sender != ADMIN){
+            revert UnauthorizedAccess();
+        }
+        _;
+    }
+    
+    /// @dev getter for legendary keys
+    /// @param gen is the generation of legendary key to fetch 
+    function fetchKeyByGen(uint256 gen) external view returns (HashFitLegendary _legendary) {
+        _legendary = legendaryKeys[gen];
+    }
+
+    /// @dev The first drop deployed by factory
+    function genesis() external view returns(HashFitCore){
         return drop[0];
     }
 
-    function deployHashFitDrop(string memory _uri, HashFit.HashFitDrop memory _setup, GenKeyInfo memory legendaryKey)
-        external returns(HashFit)
+    /// @dev the last drop deployed by factory
+    function lastGen() external returns(HashFitCore) {
+        return drop[nextGen - 1];
+    }
+    /// @dev getter for mythic key contract
+    function mythic() external returns(HashFitMythic){
+        return MYTHIC;
+    }
+    /// @dev getter for epic key contract
+    function epic() external returns(HashFitEpic){
+        return EPIC;
+    }
+
+    function setKeyBurner(address _newBurner) external onlyAdmin{
+        keyBurner = _newBurner;
+    }
+    /// @dev Admin creates new drop
+    /// @param _setup contains the required data to initialize the drop. see {HashFitTypes.HashFitDrop}
+    /// @param legendaryKey is the legenary key for the current drop generation
+    function deployHashFitDrop(string memory _uri, HashFitTypes.HashFitDrop memory _setup, HashFitTypes.Key memory legendaryKey)
+        external returns(HashFitCore)
     {
-        HashFit nextGenDrop = new HashFit(_uri, _setup);
-        HashFitLegendary nextGenLegendaryKey = new HashFitLegendary(legendaryKey.keyMetadata, legendaryKey.keyDetail);
-        legendaryKeys[nextGeneration] = address(nextGenLegendaryKey);
-        drop[nextGeneration] = address(nextGenDrop);
-        nextGeneration++;
+        HashFitCore nextGenDrop = new HashFitCore(_uri, _setup, ADMIN);
+        HashFitLegendary nextGenLegendaryKey = new HashFitLegendary(legendaryKey.keyMetadata, legendaryKey.keyDetail, ADMIN);
+        legendaryKeys[nextGen] = nextGenLegendaryKey;
+        drop[nextGen] = nextGenDrop;
+        nextGen++;
         return nextGenDrop;
     }
 
-    function restock(uint64 gen, uint8 itemId, uint64 restockAmount) external {
-        HashFit drop = HashFit(drop[gen]);
-        drop.restock(itemId, restockAmount);
-        emit RestockItem(gen, itemId, restockAmount);
-    }
-
-    function setDiscount(uint64 gen, uint8 itemId, uint64 discountBps) external {
-        HashFit drop = HashFit(drop[gen]);
-        drop.setDiscount(itemId, discountBps);
-        emit SetDiscount(gen, itemId, discountBps)
-    }
-
-    function mythic() public view returns(address){
-        return HASHFIT_MYTHIC;
-    }
-
-    function epic() public view returns(address){
-        return HASHFIT_EPIC;
-    }
 }
