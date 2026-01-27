@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.25;
 import {IERC721Receiver} from "@openzeppelin/token/ERC721/IERC721Receiver.sol";
-import {IHashFitKey} from "./IHashFitKey.sol";
+import {IHashFitKey} from "./interfaces/IHashFitKey.sol";
 
 /**
  * @title Key Burner
