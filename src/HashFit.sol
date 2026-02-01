@@ -8,17 +8,19 @@ import {IERC721A} from "@ERC721A/IERC721A.sol";
 import {IHashFitFactory} from "./interfaces/IHashFitFactory.sol";
 import {HashFitLegendary, HashFitMythic} from "./HashFitKeys.sol";
 
-/// @title HashFit Apparel Drop
+/// @title HashFit Identity SBT
 /// @author Ibrahim 🐸
 /**
- * A loyalty and identity system for a web3 backed sports wear brand
+ * An identity and loyalty rewarding system for a clothing brand.
+ * 
  *
  */
 contract HashFitCore is ERC1155, IHashFitErrors{
-    uint16 internal constant BPS = 10_000; // BPS value for % calculations 
+    // BPS value for % calculations 
+    uint16 internal constant BPS = 10_000; 
     // HashFit Factory
     address internal immutable ADMIN;
-
+    // Factory contract
     IHashFitFactory FACTORY;
     // Total unit of items in the drop
     uint64 public totalSupply;
@@ -34,19 +36,20 @@ contract HashFitCore is ERC1155, IHashFitErrors{
     HashFitTypes.Item[] internal hashFitItems; 
     // Unique drop items
     mapping(uint256 => HashFitTypes.Item) dropItems;
-
+    // Tracks the suppply of each unique item within the drop
     mapping(uint256 => uint256) public currentSupply;
     // Number of items that has been sold in the drop
     uint256 public totalSoldItems;
 
-
-    // HashFit key
+    /// @dev Used to collect info on what key a user would like to use when they attempt
+    /// To make purchase with a key
     struct KeyInfo{
-        uint64 keyGen;
-        uint64 keyId;
-        bytes32 keyTier;
+        uint64 gen; // Key generation
+        uint64 keyId; // Unique key identifier
+        bytes32 keyTier; // Key tier
     }
 
+    /// @dev Initialize drop with required data
     constructor(string memory _uri, HashFitTypes.HashFitDrop memory setup, address _admin) ERC1155(_uri) {
         // Configure drop 
         totalSupply = setup.totalSupply;
@@ -55,6 +58,7 @@ contract HashFitCore is ERC1155, IHashFitErrors{
         CYPHERING_PHASE_DURATION = setup.cypheringPhaseDuration;
         ADMIN = _admin;
         FACTORY = IHashFitFactory(msg.sender);
+        // Add unique drop items to record
         for(uint i; i < setup.items.length; i++){
             dropItems[i] = setup.items[i];
             hashFitItems.push(setup.items[i]);
@@ -71,7 +75,6 @@ contract HashFitCore is ERC1155, IHashFitErrors{
 
     /// @dev Purchase an item from drop and claim identity SBT
     /// @param _items is the list of all items to be purchased
-
     function purchaseAndClaim(HashFitTypes.SaleItem[] memory _items, bytes32[] memory) external virtual payable {
         _purchaseAndClaim(_items);
     }
@@ -113,6 +116,8 @@ contract HashFitCore is ERC1155, IHashFitErrors{
     }
 
     /// @dev Purchase items from drop using key in a 1:1 format
+    /// @param _items contain info on every items in user cart
+    /// @param keys contains info on the keys to be traded for _items
     function purchaseWithKey(HashFitTypes.SaleItem[] memory _items, KeyInfo[] memory keys) external virtual {
         // Sanity check
         if (_items.length != keys.length) {
@@ -131,7 +136,7 @@ contract HashFitCore is ERC1155, IHashFitErrors{
         
         for (uint256 i; i < _items.length; i++) {
             // Fetch key address by generation
-            HashFitLegendary legendary = FACTORY.fetchKeyByGen(keys[i].keyGen);
+            HashFitLegendary legendary = FACTORY.fetchKeyByGen(keys[i].gen);
             HashFitTypes.SaleItem memory currentItem = _items[i];
             // Make sure item is not sold out and the purchase amount does not exceed item supply
             if (!_canPurchase(currentItem)){
@@ -159,9 +164,9 @@ contract HashFitCore is ERC1155, IHashFitErrors{
 
             // Assert key ownership
             if (msg.sender != IERC721A(keyContract).ownerOf(keyId)) {
-                revert UnauthorizedKeyUsage(keys[i].keyGen, keyId);
+                revert UnauthorizedKeyUsage(keys[i].gen, keyId);
             }
-            // Burn key and mint, validate sale and mint identity SBT
+            // Redeem key and mint, validate sale and mint identity SBT
             bytes memory burnInstruction = abi.encode(keyContract, keyId);
             try IERC721A(keyContract)
                 .safeTransferFrom(msg.sender, IHashFitFactory(FACTORY).keyBurner(), keyId, burnInstruction) {
