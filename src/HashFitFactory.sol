@@ -5,7 +5,12 @@ import {IHashFitFactory} from "./interfaces/IHashFitFactory.sol";
 import {HashFitCore} from "./HashFit.sol";
 import {KeyScaffold, HashFitMythic, HashFitLegendary, HashFitEpic} from "./HashFitKeys.sol";
 import {KeyBurner} from "./KeyBurner.sol";
-
+/**
+ * @title HashFit Factory
+ * @author Ibrahim🐸
+ * 
+ * HashFit factory is responsible for the deployment of new gen of HashFit drops.
+ */
 contract HashFitFactory is IHashFitFactory {
     /// @dev The key burner contract
     address public keyBurner;
