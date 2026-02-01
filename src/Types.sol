@@ -1,6 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.25;
 
+/**
+ * @title HashFitTypes
+ * @author Ibrahim🐸
+ * 
+ * This contract defines all complex datatypes used across all HashFit contracts
+ */
 abstract contract HashFitTypes{
     /// @dev defines basic ERC721 metadata for key
     struct Metadata {
