@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity ^0.8.25;
-/// @dev declares all error and event signatures for HashFitCore
+///@author Ibrahim🐸
+/// @dev This interface declares all error and event signatures for HashFitCore and other related contracts
 
 interface IHashFitErrors{
     // Emitted after a successful purchase of an item
@@ -11,15 +12,25 @@ interface IHashFitErrors{
 
     // Thrown when a purchase is attempted before drop sale begins 
     error SaleNotStarted();
+    // Thrown when user tries to access admin functionalitiesd
     error UnauthorizedAccess();
+    // Thrown when user tries to transfer Identity SBT {HashFitCore}
     error NonTransferrable();
+    // 
     error NotEnoughItems();
+    // Thrown when user doesn't send enough funds to purchase drop items.
     error InsufficientFund();
     error UriRequestForNonExistentToken();
+    // Thrown when user does not provide enough keys to exchange for n drop items
     error InsufficientKeys(address);
+    // Thrown when user tries to use a key that does not belong to them
     error UnauthorizedKeyUsage(uint256, uint256);
+    // Thrown when key redeem fails
     error UnableToTransferKey();
+    // Thrown when user does not provide enough keys to exchange for n drop items
     error KeyMismatch();
+    // Thrown when user tries to use an expired legendary key
     error ExpiredKey(uint256);
+    // Thrown when item purchase fail
     error CannotPurchaseItem(uint256 itemId, uint256 amount);
 }
