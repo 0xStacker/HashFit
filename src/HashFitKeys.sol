@@ -12,11 +12,35 @@ import {IHashFitKey} from "./interfaces/IHashFitKey.sol";
  *     - Mythic
  *     - Legendary
  *     - Epic
+ * 
+ * Mythic Keys:
+ *  - Mythic keys are the most rare key types
+ *  - They carry multiple perks and can be redeemed at any point in time
+ *  - They do not expire
+ *  - Perks include:
+ *      * Automatically whitelists holders for limited/exclusive perks
+ *      * Can be redeemed for any item within exclusive drop in a 1:1 manner
+ *      * Can be redeemed for irl perks such as gym passes.
+ *      * Can also be redeemed for items on regular drops
+ * 
+ * Legendary Keys:
+ *  - Legendary keys are fairly rare keys with only one major use case;
+ *  - They can basically be redeemed for any item within a regular drop in a 1:1 manner
+ *  - Legendary keys however, have expiry which is determined by their validity
+ *  - Users can redeem a legendary key for any item in drops that comes within its validity range
+ *  - ex: A legendary key with 3 gen validity means users can redeem keys from that legendary key gen for 
+ *  - items in any of the next three generations of drops.
+ * 
+ * 
+ *  Epic Keys:
+ *   - Epic keys are basically minor coupons that can be applied on items to get further discounts
  */
 
 abstract contract KeyScaffold is ERC721A, IHashFitKey {
     // How many generations key is valid for
-    uint8 private immutable KEY_VALIDITY;
+    uint8 internal immutable KEY_VALIDITY;
+    // Flag to check whether key for this gen has been distributed
+    bool internal distributed;
     // Factory address
     address internal immutable ADMIN;
     // Generation in which key was created
@@ -36,7 +60,7 @@ abstract contract KeyScaffold is ERC721A, IHashFitKey {
     // admin priviledge calls
     modifier onlyAdmin() {
         if (msg.sender != ADMIN) {
-            revert UnauthorizedAccess();
+            revert NotOwner();
         }
         _;
     }
@@ -56,10 +80,17 @@ abstract contract KeyScaffold is ERC721A, IHashFitKey {
 
     /// @dev admin gated function used for manual key distribution.
     function distributeKeys(HashFitTypes.Receiver[] memory receivers) external onlyAdmin{
+        // Check whether key for this gen has been distributed
+        if(distributed){
+            revert KeyDistributed(GENERATION)
+        }
         for (uint256 i; i < receivers.length; i++) {
             _mint(receivers[i].receiverAddress, receivers[i].amount);
             emit DistributeKeys(receivers[i].receiverAddress, receivers[i].amount);
         }
+
+        // Flag key as distributed and prevent newer ditributions
+        distributed = true;
     }
 
     /// @dev The drop generation in which key was created.
