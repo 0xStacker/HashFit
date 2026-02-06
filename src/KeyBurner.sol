@@ -6,13 +6,14 @@ import {IHashFitKey} from "./interfaces/IHashFitKey.sol";
 
 /**
  * @title Key Burner
- * @author Ibrahim
- * @notice
+ * @author Ibrahim🐸
+ * This contract is responsible for burning all redeemed HashFit keys
  */
 
 contract KeyBurner is IERC721Receiver {
     event KeyDestroyed(address ca, uint256 keyId);
 
+    // Receives and burns keys
     function onERC721Received(address, address, uint256, bytes calldata data) external returns (bytes4) {
         (address ca, uint256 keyId) = abi.decode(data, (address, uint256));
         _burn(ca, keyId);
