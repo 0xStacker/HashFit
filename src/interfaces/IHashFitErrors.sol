@@ -4,19 +4,19 @@ pragma solidity ^0.8.25;
 ///@author Ibrahim🐸
 /// @dev This interface declares all error and event signatures for HashFitCore and other related contracts
 
-interface IHashFitErrors{
+interface IHashFitErrors {
     // Emitted after a successful purchase of an item
     event PurchaseAndClaim(uint256 item, uint256 amount, bool key);
     // Emitted when a key is succesfully redeemed
     event RedeemKey(address redeemer, uint256 keyGen, uint256 keyId);
 
-    // Thrown when a purchase is attempted before drop sale begins 
+    // Thrown when a purchase is attempted before drop sale begins
     error SaleNotStarted();
     // Thrown when user tries to access admin functionalitiesd
     error UnauthorizedAccess();
     // Thrown when user tries to transfer Identity SBT {HashFitCore}
     error NonTransferrable();
-    // 
+    //
     error NotEnoughItems();
     // Thrown when user doesn't send enough funds to purchase drop items.
     error InsufficientFund();
