@@ -11,10 +11,9 @@ interface IHashFitFactory {
     // The burner is responsible for destroying redeemed keys
     function keyBurner() external returns (address);
 
-    // Fetches the non changing mythic key 
-    function mythic() external returns(HashFitMythic);
+    // Fetches the non changing mythic key
+    function mythic() external returns (HashFitMythic);
     // Fetches the epic key
-    function epic() external returns(HashFitEpic);
+    function epic() external returns (HashFitEpic);
     event NewBurnerSet(address newBurner);
-  
 }
