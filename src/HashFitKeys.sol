@@ -12,7 +12,7 @@ import {IHashFitKey} from "./interfaces/IHashFitKey.sol";
  *     - Mythic
  *     - Legendary
  *     - Epic
- * 
+ *
  * Mythic Keys:
  *  - Mythic keys are the most rare key types
  *  - They carry multiple perks and can be redeemed at any point in time
@@ -22,16 +22,16 @@ import {IHashFitKey} from "./interfaces/IHashFitKey.sol";
  *      * Can be redeemed for any item within exclusive drop in a 1:1 manner
  *      * Can be redeemed for irl perks such as gym passes.
  *      * Can also be redeemed for items on regular drops
- * 
+ *
  * Legendary Keys:
  *  - Legendary keys are fairly rare keys with only one major use case;
  *  - They can basically be redeemed for any item within a regular drop in a 1:1 manner
  *  - Legendary keys however, have expiry which is determined by their validity
  *  - Users can redeem a legendary key for any item in drops that comes within its validity range
- *  - ex: A legendary key with 3 gen validity means users can redeem keys from that legendary key gen for 
+ *  - ex: A legendary key with 3 gen validity means users can redeem keys from that legendary key gen for
  *  - items in any of the next three generations of drops.
- * 
- * 
+ *
+ *
  *  Epic Keys:
  *   - Epic keys are basically minor coupons that can be applied on items to get further discounts
  */
@@ -60,7 +60,7 @@ abstract contract KeyScaffold is ERC721A, IHashFitKey {
     // admin priviledge calls
     modifier onlyAdmin() {
         if (msg.sender != ADMIN) {
-            revert NotOwner();
+            revert UnauthorizedAccess();
         }
         _;
     }
@@ -68,7 +68,7 @@ abstract contract KeyScaffold is ERC721A, IHashFitKey {
     // Owner priviledge calls
     modifier onlyOwner(uint256 tokenId) {
         if (msg.sender != ownerOf(tokenId)) {
-            revert UnauthorizedAccess();
+            revert NotOwner(tokenId);
         }
         _;
     }
@@ -79,10 +79,10 @@ abstract contract KeyScaffold is ERC721A, IHashFitKey {
     }
 
     /// @dev admin gated function used for manual key distribution.
-    function distributeKeys(HashFitTypes.Receiver[] memory receivers) external onlyAdmin{
+    function distributeKeys(HashFitTypes.Receiver[] memory receivers) external onlyAdmin {
         // Check whether key for this gen has been distributed
-        if(distributed){
-            revert KeyDistributed(GENERATION)
+        if (distributed) {
+            revert KeyDistributed(GENERATION);
         }
         for (uint256 i; i < receivers.length; i++) {
             _mint(receivers[i].receiverAddress, receivers[i].amount);
@@ -112,7 +112,7 @@ abstract contract KeyScaffold is ERC721A, IHashFitKey {
     }
 
     /// @dev All tokens return the same URI which is the image representation of the key
-    function tokenURI(uint) public view override returns(string memory){
+    function tokenURI(uint256) public view override returns (string memory) {
         return baseURI;
     }
 
@@ -140,13 +140,17 @@ abstract contract KeyScaffold is ERC721A, IHashFitKey {
 contract HashFitMythic is KeyScaffold {
     bytes32 internal constant TIER = keccak256("MYTHIC");
 
-    constructor(HashFitTypes.Metadata memory _keyMetaData, HashFitTypes.KeyDetail memory _keyDetail, address _admin) KeyScaffold(_keyMetaData, _keyDetail, _admin) {}
+    constructor(string memory _uri, HashFitTypes.KeyDetail memory _keyDetail, address _admin)
+        KeyScaffold(
+            HashFitTypes.Metadata({name: "HashFit Mythic Key", symbol: "MYTHIC", uri: _uri}), _keyDetail, _admin
+        )
+    {}
 
     function keyTier() external pure override returns (bytes32) {
         return TIER;
     }
 
-    function generation() external pure override returns(uint){
+    function generation() external pure override returns (uint256) {
         return 0;
     }
 }
@@ -158,7 +162,11 @@ contract HashFitMythic is KeyScaffold {
 ///        - Expires if not used within the time frame for which its usage is valid
 contract HashFitLegendary is KeyScaffold {
     bytes32 internal constant TIER = keccak256("LEGENDARY");
-    constructor(HashFitTypes.Metadata memory _keyMetaData, HashFitTypes.KeyDetail memory _keyDetail, address _admin) KeyScaffold(_keyMetaData, _keyDetail, _admin) {}
+    constructor(string memory _uri, HashFitTypes.KeyDetail memory _keyDetail, address _admin)
+        KeyScaffold(
+            HashFitTypes.Metadata({name: "HashFit Legendary Key", symbol: "LEGENDARY", uri: _uri}), _keyDetail, _admin
+        )
+    {}
 
     function keyTier() external pure override returns (bytes32) {
         return TIER;
@@ -167,7 +175,9 @@ contract HashFitLegendary is KeyScaffold {
 
 contract HashFitEpic is KeyScaffold {
     bytes32 internal constant TIER = keccak256("EPIC");
-    constructor(HashFitTypes.Metadata memory _keyMetaData, HashFitTypes.KeyDetail memory _keyDetail, address _admin) KeyScaffold(_keyMetaData, _keyDetail, _admin) {}
+    constructor(string memory _uri, HashFitTypes.KeyDetail memory _keyDetail, address _admin)
+        KeyScaffold(HashFitTypes.Metadata({name: "HashFit Epic Key", symbol: "EPIC", uri: _uri}), _keyDetail, _admin)
+    {}
 
     function keyTier() external pure override returns (bytes32) {
         return TIER;
