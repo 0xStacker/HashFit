@@ -1,4 +1,4 @@
- // SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.25;
 import {HashFitTypes} from "./Types.sol";
 import {IHashFitErrors} from "./interfaces/IHashFitErrors.sol";
@@ -12,12 +12,12 @@ import {HashFitLegendary, HashFitMythic} from "./HashFitKeys.sol";
 /// @author Ibrahim 🐸
 /**
  * An identity and loyalty rewarding system for a clothing brand.
- * 
+ *
  *
  */
-contract HashFitCore is ERC1155, IHashFitErrors{
-    // BPS value for % calculations 
-    uint16 internal constant BPS = 10_000; 
+contract HashFitCore is ERC1155, IHashFitErrors {
+    // BPS value for % calculations
+    uint16 internal constant BPS = 10_000;
     // HashFit Factory
     address internal immutable ADMIN;
     // Factory contract
@@ -33,7 +33,7 @@ contract HashFitCore is ERC1155, IHashFitErrors{
     // SBT uri
     string public contractUri;
     // Unique HashFit items
-    HashFitTypes.Item[] internal hashFitItems; 
+    HashFitTypes.Item[] internal hashFitItems;
     // Unique drop items
     mapping(uint256 => HashFitTypes.Item) dropItems;
     // Tracks the suppply of each unique item within the drop
@@ -43,7 +43,7 @@ contract HashFitCore is ERC1155, IHashFitErrors{
 
     /// @dev Used to collect info on what key a user would like to use when they attempt
     /// To make purchase with a key
-    struct KeyInfo{
+    struct KeyInfo {
         uint64 gen; // Key generation
         uint64 keyId; // Unique key identifier
         bytes32 keyTier; // Key tier
@@ -51,7 +51,7 @@ contract HashFitCore is ERC1155, IHashFitErrors{
 
     /// @dev Initialize drop with required data
     constructor(string memory _uri, HashFitTypes.HashFitDrop memory setup, address _admin) ERC1155(_uri) {
-        // Configure drop 
+        // Configure drop
         totalSupply = setup.totalSupply;
         GENERATION = setup.generation;
         SALE_START_TIME = setup.saleStartTime;
@@ -59,15 +59,15 @@ contract HashFitCore is ERC1155, IHashFitErrors{
         ADMIN = _admin;
         FACTORY = IHashFitFactory(msg.sender);
         // Add unique drop items to record
-        for(uint i; i < setup.items.length; i++){
+        for (uint256 i; i < setup.items.length; i++) {
             dropItems[i] = setup.items[i];
             hashFitItems.push(setup.items[i]);
         }
     }
 
     // Enforce factory priviledges
-    modifier onlyAdmin{
-        if(msg.sender != ADMIN){
+    modifier onlyAdmin() {
+        if (msg.sender != ADMIN) {
             revert UnauthorizedAccess();
         }
         _;
@@ -75,10 +75,9 @@ contract HashFitCore is ERC1155, IHashFitErrors{
 
     /// @dev Purchase an item from drop and claim identity SBT
     /// @param _items is the list of all items to be purchased
-    function purchaseAndClaim(HashFitTypes.SaleItem[] memory _items, bytes32[] memory) external virtual payable {
+    function purchaseAndClaim(HashFitTypes.SaleItem[] memory _items, bytes32[] memory) external payable virtual {
         _purchaseAndClaim(_items);
     }
-
 
     /// @dev Purchase n units of m items
     function _purchaseAndClaim(HashFitTypes.SaleItem[] memory _items) internal {
@@ -94,16 +93,13 @@ contract HashFitCore is ERC1155, IHashFitErrors{
         for (uint8 i; i < _items.length; i++) {
             HashFitTypes.SaleItem memory currentItem = _items[i];
 
-            if (
-                currentSupply[currentItem.itemId] + currentItem.amount
-                    > dropItems[currentItem.itemId].maxSupply
-            ) {
+            if (currentSupply[currentItem.itemId] + currentItem.amount > dropItems[currentItem.itemId].maxSupply) {
                 revert CannotPurchaseItem(currentItem.itemId, currentItem.amount);
             }
             uint64 discount = dropItems[currentItem.itemId].discount;
             uint256 price = dropItems[currentItem.itemId].price;
             uint256 amount = currentItem.amount;
-            totalCost += discount > 0 ? (price * amount * discount) / BPS : price * amount; 
+            totalCost += discount > 0 ? (price * amount * discount) / BPS : price * amount;
             if (msg.value < totalCost) {
                 revert InsufficientFund();
             }
@@ -133,13 +129,13 @@ contract HashFitCore is ERC1155, IHashFitErrors{
 
         // Non changing mythic key contract
         HashFitMythic mythic = FACTORY.mythic();
-        
+
         for (uint256 i; i < _items.length; i++) {
             // Fetch key address by generation
             HashFitLegendary legendary = FACTORY.fetchKeyByGen(keys[i].gen);
             HashFitTypes.SaleItem memory currentItem = _items[i];
             // Make sure item is not sold out and the purchase amount does not exceed item supply
-            if (!_canPurchase(currentItem)){
+            if (!_canPurchase(currentItem)) {
                 revert CannotPurchaseItem(currentItem.itemId, currentItem.amount);
             }
             // Use the corressponding key for the next item.
@@ -183,22 +179,19 @@ contract HashFitCore is ERC1155, IHashFitErrors{
     }
 
     /// @dev Checks whether an item can be purchased without exceeding its current max supply
-    function _canPurchase(HashFitTypes.SaleItem memory item) internal view returns(bool){
-        if (
-            currentSupply[item.itemId] + item.amount
-                > dropItems[item.itemId].maxSupply
-        ) {
+    function _canPurchase(HashFitTypes.SaleItem memory item) internal view returns (bool) {
+        if (currentSupply[item.itemId] + item.amount > dropItems[item.itemId].maxSupply) {
             return false;
         }
         return true;
     }
 
     // ADMIN GATED FUNCTIONS
-    /// @dev Restocks a particular drop item 
+    /// @dev Restocks a particular drop item
     /// @param itemId is the identifier of the item to restock
     /// @param restockAmount is the amount of that item that is to be restocked
     /// NB: Restock can only be done through factory by an authorized admin
-    function restock(uint8 itemId, uint64 restockAmount) external onlyAdmin{
+    function restock(uint8 itemId, uint64 restockAmount) external onlyAdmin {
         dropItems[itemId].maxSupply += restockAmount;
         totalSupply += restockAmount;
     }
@@ -207,7 +200,7 @@ contract HashFitCore is ERC1155, IHashFitErrors{
     /// @param itemId is the identifier of the item for which discount is to be applied
     /// @param discountBps defines the percentage of discount to be applied. (100bps = 1%)
     /// NB: Discount can only be set through factory by an authorized admin
-    function setDiscount(uint8 itemId, uint64 discountBps) external onlyAdmin{
+    function setDiscount(uint8 itemId, uint64 discountBps) external onlyAdmin {
         dropItems[itemId].discount = discountBps;
     }
 
@@ -220,7 +213,7 @@ contract HashFitCore is ERC1155, IHashFitErrors{
     }
 
     /// @dev getter for all unique drop items
-    function items() external view returns(HashFitTypes.Item[] memory){
+    function items() external view returns (HashFitTypes.Item[] memory) {
         return hashFitItems;
     }
 
@@ -228,7 +221,7 @@ contract HashFitCore is ERC1155, IHashFitErrors{
     function itemsLeft(uint256 itemId) external view returns (uint256) {
         return dropItems[itemId].maxSupply - currentSupply[itemId];
     }
-    
+
     /// @dev Checks if an item exists in the drop
     function _itemExists(uint256 itemId) internal view returns (bool) {
         return dropItems[itemId].maxSupply != 0;
