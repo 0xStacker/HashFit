@@ -54,6 +54,8 @@ abstract contract HashFitTypes {
         uint64 maxSupply;
         // Percentage discount applied
         uint64 discount;
+        // Cost in keys (Used in exclusive drops)
+        uint64 priceInKeys;
         // Selling price of a unit of an item
         uint256 price;
         // Item name
@@ -77,6 +79,15 @@ abstract contract HashFitTypes {
         uint256 cypheringPhaseDuration;
         // Unique items in the drop. see {Item} struct.
         Item[] items;
+    }
+
+    
+    /// @dev Used to collect info on what key a user would like to use when they attempt
+    /// To make purchase with a key
+    struct KeyInfo {
+        uint64 gen; // Key generation
+        uint64 keyId; // Unique key identifier
+        bytes32 keyTier; // Key tier
     }
 
     /// @dev Used to collect the info of an item a user wants to purchase within drop
