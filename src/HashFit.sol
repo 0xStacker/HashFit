@@ -7,6 +7,7 @@ import {IHashFitKey} from "./interfaces/IHashFitKey.sol";
 import {IERC721A} from "@ERC721A/IERC721A.sol";
 import {IHashFitFactory} from "./interfaces/IHashFitFactory.sol";
 import {HashFitLegendary, HashFitMythic} from "./HashFitKeys.sol";
+import {ReentrancyGuard} from "@openzeppelin/utils/ReentrancyGuard.sol";
 
 /// @title HashFit Identity SBT
 /// @author Ibrahim 🐸
@@ -15,13 +16,15 @@ import {HashFitLegendary, HashFitMythic} from "./HashFitKeys.sol";
  *
  *
  */
-contract HashFitCore is ERC1155, IHashFitErrors {
+contract HashFitCore is ERC1155, IHashFitErrors, ReentrancyGuard{
     // BPS value for % calculations
     uint16 internal constant BPS = 10_000;
     // HashFit Factory
     address internal immutable ADMIN;
     // Factory contract
-    IHashFitFactory FACTORY;
+    IHashFitFactory internal immutable FACTORY;
+    // Non changing mythic key contract
+    HashFitMythic internal immutable mythic;
     // Total unit of items in the drop
     uint64 public totalSupply;
     // Current Drop Generation
@@ -50,7 +53,7 @@ contract HashFitCore is ERC1155, IHashFitErrors {
     }
 
     /// @dev Initialize drop with required data
-    constructor(string memory _uri, HashFitTypes.HashFitDrop memory setup, address _admin) ERC1155(_uri) {
+    constructor(string memory _uri, HashFitTypes.HashFitDrop memory setup, address _admin) ERC1155(_uri) ReentrancyGuard(){
         // Configure drop
         totalSupply = setup.totalSupply;
         GENERATION = setup.generation;
@@ -58,6 +61,7 @@ contract HashFitCore is ERC1155, IHashFitErrors {
         CYPHERING_PHASE_DURATION = setup.cypheringPhaseDuration;
         ADMIN = _admin;
         FACTORY = IHashFitFactory(msg.sender);
+        mythic = FACTORY.mythic();
         // Add unique drop items to record
         for (uint256 i; i < setup.items.length; i++) {
             dropItems[i] = setup.items[i];
@@ -75,17 +79,14 @@ contract HashFitCore is ERC1155, IHashFitErrors {
 
     /// @dev Purchase an item from drop and claim identity SBT
     /// @param _items is the list of all items to be purchased
-    function purchaseAndClaim(HashFitTypes.SaleItem[] memory _items, bytes32[] memory) external payable virtual {
+    function purchaseAndClaim(HashFitTypes.SaleItem[] memory _items, bytes32[] memory) external payable nonReentrant virtual {
         _purchaseAndClaim(_items);
     }
 
-    /// @dev Purchase n units of m items
+    /// @dev Purchase n units of m items with no key involvements 
     function _purchaseAndClaim(HashFitTypes.SaleItem[] memory _items) internal {
         if (block.timestamp < SALE_START_TIME) {
             revert SaleNotStarted();
-        }
-        if (totalSoldItems + _items.length > totalSupply) {
-            revert NotEnoughItems();
         }
 
         uint256 totalCost;
@@ -99,81 +100,18 @@ contract HashFitCore is ERC1155, IHashFitErrors {
             uint64 discount = dropItems[currentItem.itemId].discount;
             uint256 price = dropItems[currentItem.itemId].price;
             uint256 amount = currentItem.amount;
-            totalCost += discount > 0 ? (price * amount * discount) / BPS : price * amount;
+            totalCost += discount > 0 ? (price - ((price * amount * discount) / BPS)) : price * amount;
             if (msg.value < totalCost) {
                 revert InsufficientFund();
             }
 
             currentSupply[currentItem.itemId] += currentItem.amount;
+
+            if (totalSoldItems + currentItem.amount > totalSupply) {
+                revert NotEnoughItems();
+            }
             totalSoldItems += currentItem.amount;
             emit PurchaseAndClaim(currentItem.itemId, currentItem.amount, false);
-            _mint(msg.sender, currentItem.amount, currentItem.itemId, "");
-        }
-    }
-
-    /// @dev Purchase items from drop using key in a 1:1 format
-    /// @param _items contain info on every items in user cart
-    /// @param keys contains info on the keys to be traded for _items
-    function purchaseWithKey(HashFitTypes.SaleItem[] memory _items, KeyInfo[] memory keys) external virtual {
-        // Sanity check
-        if (_items.length != keys.length) {
-            revert KeyMismatch();
-        }
-        // Ensure sale has begun
-        if (block.timestamp < SALE_START_TIME) {
-            revert SaleNotStarted();
-        }
-
-        address keyContract;
-        IHashFitKey key;
-
-        // Non changing mythic key contract
-        HashFitMythic mythic = FACTORY.mythic();
-
-        for (uint256 i; i < _items.length; i++) {
-            // Fetch key address by generation
-            HashFitLegendary legendary = FACTORY.fetchKeyByGen(keys[i].gen);
-            HashFitTypes.SaleItem memory currentItem = _items[i];
-            // Make sure item is not sold out and the purchase amount does not exceed item supply
-            if (!_canPurchase(currentItem)) {
-                revert CannotPurchaseItem(currentItem.itemId, currentItem.amount);
-            }
-            // Use the corressponding key for the next item.
-            uint256 keyId = keys[i].keyId;
-            bytes32 tier = keys[i].keyTier;
-            // (address keyContract, IHashFitKey key) = tier == keccak256(bytes("LEGENDARY")) ? (legendary, IHashFitKey(legendary)):(mythic, IHashFitKey(mythic)) ;
-            if (tier == keccak256("LEGENDARY")) {
-                keyContract = address(legendary);
-                key = legendary;
-                // Check for legendary expiry
-                if (GENERATION - key.generation() < key.validity()) {
-                    revert ExpiredKey(keyId);
-                }
-            } else if (tier == keccak256("MYTHIC")) {
-                // No expiry checks as mythic keys don't expire
-                keyContract = address(mythic);
-                key = mythic;
-            } else {
-                // reject invalid keys e.g epic
-                revert CannotPurchaseItem(currentItem.itemId, currentItem.amount);
-            }
-
-            // Assert key ownership
-            if (msg.sender != IERC721A(keyContract).ownerOf(keyId)) {
-                revert UnauthorizedKeyUsage(keys[i].gen, keyId);
-            }
-            // Redeem key and mint, validate sale and mint identity SBT
-            bytes memory burnInstruction = abi.encode(keyContract, keyId);
-            try IERC721A(keyContract)
-                .safeTransferFrom(msg.sender, IHashFitFactory(FACTORY).keyBurner(), keyId, burnInstruction) {
-                emit RedeemKey(msg.sender, key.generation(), keyId);
-            } catch {
-                revert UnableToTransferKey();
-            }
-
-            currentSupply[currentItem.itemId] += currentItem.amount;
-            totalSoldItems += currentItem.amount;
-            emit PurchaseAndClaim(currentItem.itemId, currentItem.amount, true);
             _mint(msg.sender, currentItem.amount, currentItem.itemId, "");
         }
     }
