@@ -24,7 +24,7 @@ contract HashFitExclusive is HashFitCore {
     constructor(string memory _uri, bytes32 merkleRoot, HashFitTypes.HashFitDrop memory setup, address _admin)
         HashFitCore(_uri, setup, _admin)
     {
-        root = merkleRoot;
+        ROOT = merkleRoot;
     }
 
     // Thrown when a non whitelisted user attempts a purchase
@@ -44,50 +44,49 @@ contract HashFitExclusive is HashFitCore {
         payable
         override
         onlyWhitelist(proof)
+        nonReentrant
     {
         _purchaseAndClaim(_items);
     }
 
-    /// @inheritdoc HashFitCore
-    function purchaseWithKey(HashFitTypes.SaleItem[] memory _items, KeyInfo[] memory keys) external override {
-        // Sanity check
-        if (_items.length != keys.length) {
+
+    function purchaseWithKey(HashFitTypes.SaleItem memory _item, uint256[] memory keyIds) external nonReentrant{
+        if (keyIds.length < dropItems[_item.itemId].priceInKeys){
             revert KeyMismatch();
         }
+
         // Ensure sale has begun
         if (block.timestamp < SALE_START_TIME) {
             revert SaleNotStarted();
         }
-        // Fetch the address of the HashFit mythic key from factory
-        HashFitMythic mythic = FACTORY.mythic();
-        address keyContract = address(mythic);
+
         IHashFitKey key = mythic;
 
-        for (uint256 i; i < _items.length; i++) {
-            // Make sure item is not sold out
-            HashFitTypes.SaleItem memory currentItem = _items[i];
-            if (currentSupply[currentItem.itemId] + currentItem.amount > dropItems[currentItem.itemId].maxSupply) {
-                revert CannotPurchaseItem(currentItem.itemId, currentItem.amount);
-            }
-            // Use the corresponding key for current item
-            uint256 keyId = keys[i].keyId;
+        if (currentSupply[_item.itemId] + _item.amount > dropItems[_item.itemId].maxSupply) {
+            revert CannotPurchaseItem(_item.itemId, _item.amount);
+        }
 
-            if (msg.sender != IERC721A(keyContract).ownerOf(keyId)) {
-                revert UnauthorizedKeyUsage(keys[i].gen, keyId);
+        for (uint i; i < keyIds.length; i++){
+            uint256 keyId = keyIds[i];
+
+            if (msg.sender != IERC721A(mythic).ownerOf(keyId)) {
+                revert UnauthorizedKeyUsage(key.generation(), keyId);
             }
-            // Burn key and mint, validate sale and mint identity SBT
-            bytes memory burnInstruction = abi.encode(keyContract, keyId);
-            try IERC721A(keyContract)
-                .safeTransferFrom(msg.sender, IHashFitFactory(FACTORY).keyBurner(), keyId, burnInstruction) {
+            // Send key to burner and mint identity SBT
+            bytes memory burnInstruction = abi.encode(address(mythic), keyId);
+            try IERC721A(mythic)
+                .safeTransferFrom(msg.sender, FACTORY.keyBurner(), keyId, burnInstruction) {
                 emit RedeemKey(msg.sender, key.generation(), keyId);
             } catch {
                 revert UnableToTransferKey();
             }
-
-            currentSupply[currentItem.itemId] += currentItem.amount;
-            totalSoldItems += currentItem.amount;
-            emit PurchaseAndClaim(currentItem.itemId, currentItem.amount, true);
-            _mint(msg.sender, currentItem.amount, currentItem.itemId, "");
         }
+        // Use the corresponding key for current item
+
+
+        currentSupply[_item.itemId] += _item.amount;
+        totalSoldItems += _item.amount;
+        emit PurchaseAndClaim(_item.itemId, _item.amount, true);
+        _mint(msg.sender, _item.amount, _item.itemId, "");      
     }
 }
