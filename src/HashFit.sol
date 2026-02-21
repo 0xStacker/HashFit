@@ -16,15 +16,12 @@ import {ReentrancyGuard} from "@openzeppelin/utils/ReentrancyGuard.sol";
  *
  *
  */
-contract HashFitCore is ERC1155, IHashFitErrors, ReentrancyGuard{
+contract HashFitCore is ERC1155, IHashFitErrors, ReentrancyGuard {
     // BPS value for % calculations
     uint16 internal constant BPS = 10_000;
     // HashFit Factory
     address internal immutable ADMIN;
-    // Factory contract
-    IHashFitFactory internal immutable FACTORY;
-    // Non changing mythic key contract
-    HashFitMythic internal immutable mythic;
+
     // Total unit of items in the drop
     uint64 public totalSupply;
     // Current Drop Generation
@@ -44,24 +41,14 @@ contract HashFitCore is ERC1155, IHashFitErrors, ReentrancyGuard{
     // Number of items that has been sold in the drop
     uint256 public totalSoldItems;
 
-    /// @dev Used to collect info on what key a user would like to use when they attempt
-    /// To make purchase with a key
-    struct KeyInfo {
-        uint64 gen; // Key generation
-        uint64 keyId; // Unique key identifier
-        bytes32 keyTier; // Key tier
-    }
-
     /// @dev Initialize drop with required data
-    constructor(string memory _uri, HashFitTypes.HashFitDrop memory setup, address _admin) ERC1155(_uri) ReentrancyGuard(){
+    constructor(HashFitTypes.HashFitDrop memory setup, address _admin) ERC1155(setup.uri) ReentrancyGuard() {
         // Configure drop
         totalSupply = setup.totalSupply;
         GENERATION = setup.generation;
         SALE_START_TIME = setup.saleStartTime;
         CYPHERING_PHASE_DURATION = setup.cypheringPhaseDuration;
         ADMIN = _admin;
-        FACTORY = IHashFitFactory(msg.sender);
-        mythic = FACTORY.mythic();
         // Add unique drop items to record
         for (uint256 i; i < setup.items.length; i++) {
             dropItems[i] = setup.items[i];
@@ -79,11 +66,16 @@ contract HashFitCore is ERC1155, IHashFitErrors, ReentrancyGuard{
 
     /// @dev Purchase an item from drop and claim identity SBT
     /// @param _items is the list of all items to be purchased
-    function purchaseAndClaim(HashFitTypes.SaleItem[] memory _items, bytes32[] memory) external payable nonReentrant virtual {
+    function purchaseAndClaim(HashFitTypes.SaleItem[] memory _items, bytes32[] memory)
+        external
+        payable
+        virtual
+        nonReentrant
+    {
         _purchaseAndClaim(_items);
     }
 
-    /// @dev Purchase n units of m items with no key involvements 
+    /// @dev Purchase n units of m items with no key involvements
     function _purchaseAndClaim(HashFitTypes.SaleItem[] memory _items) internal {
         if (block.timestamp < SALE_START_TIME) {
             revert SaleNotStarted();
