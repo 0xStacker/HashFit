@@ -16,6 +16,10 @@ import {HashFitCore} from "./HashFit.sol";
  */
 
 contract HashFitAdmin {
+    /// @dev Total regular drops deployed by admin so far
+    uint16 totalDropsDeployed;
+    /// @dev Total exclusive drops deployed by admin so far
+    uint16 totalExclusivesDeployed;
     /// @dev Factory controlled by admin contract
     HashFitFactory public immutable FACTORY;
 
@@ -32,6 +36,10 @@ contract HashFitAdmin {
     event Command__SetKeyBurner(address _newBurner);
     // Emitted when admins distributes keys
     event Command__DistributeKeys(HashFitTypes.KeyTier indexed tier);
+    // Emitted when a new gen drop is deployed
+    event Command__DeployHashFitDrop();
+    // Emitted when a new exclusive drop is deployed.
+    event Command__DeoloyExclusiveDrop();
 
     error InvalidKeyType();
 
@@ -62,25 +70,16 @@ contract HashFitAdmin {
         emit Command__SetKeyBurner(_newBurner);
     }
 
-    /// @dev Admin function to distribute legendary keys for a particular gen
-    /// @notice keys can only be distributed for a gen once
-    /// @param _receivers contain the addresses of the winners, computed off chain
-    /// @param gen is the key generation to be distributed
-    function distributeLegendary(HashFitTypes.Receiver[] memory _receivers, uint256 gen) external {
-        HashFitLegendary legendary = FACTORY.fetchKeyByGen(gen);
-        legendary.distributeKeys(_receivers);
-        emit Command__DistributeKeys(HashFitTypes.KeyTier.LEGENDARY);
-    }
-
     /// @dev Admin function to distribute mythic and epic keys]
     /// @param _receivers contains the addresses of the winners to which keys would be distributed.
     /// @param tier is the key tier to distribute
     /// - Mythic
     /// - Epic
-    function distributeOthers(HashFitTypes.Receiver[] memory _receivers, HashFitTypes.KeyTier tier) external {
+    function distributeKeys(HashFitTypes.Receiver[] memory _receivers, HashFitTypes.KeyTier tier) external {
         // reject invalid key types
-        if (tier != HashFitTypes.KeyTier.MYTHIC && tier != HashFitTypes.KeyTier.EPIC) {
-            revert InvalidKeyType();
+        if (tier == HashFitTypes.KeyTier.LEGENDARY) {
+            HashFitMythic mythic = FACTORY.mythic();
+            mythic.distributeKeys(_receivers);
         }
         // distribute mythics
         if (tier == HashFitTypes.KeyTier.MYTHIC) {
@@ -94,4 +93,19 @@ contract HashFitAdmin {
         }
         emit Command__DistributeKeys(tier);
     }
+
+    /// @dev Admin function to deploy a new drop from factory
+    function deployHashFitDrop(HashFitTypes.HashFitDrop memory setup) external {
+        FACTORY.deployHashFitDrop(setup);
+        emit Command__DeployHashFitDrop();
+    }
+
+    /// @dev Admin function to deploy a new exclusive drop from factory
+    function deployExclusiveDrop(bytes32 merkleRoot, HashFitTypes.HashFitDrop memory setup) external {
+        FACTORY.deployHashFitExclusive(merkleRoot, setup);
+        emit Command__DeoloyExclusiveDrop();
+    }
+
+    /// @dev prevents further deployments of drops
+    function haltDeployments() external {}
 }
