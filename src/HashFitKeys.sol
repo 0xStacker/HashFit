@@ -93,11 +93,6 @@ abstract contract KeyScaffold is ERC721A, IHashFitKey {
         distributed = true;
     }
 
-    /// @dev The drop generation in which key was created.
-    function generation() external view virtual returns (uint256 gen) {
-        gen = GENERATION;
-    }
-
     /// @dev The time frame for which key usage is valid.
     /// @notice a validity of 0 means key cannot expire (Mythic tier keys)
     /// @notice a validity of n (n >= 1) means keys are valid for the next n drops.
@@ -148,10 +143,6 @@ contract HashFitMythic is KeyScaffold {
 
     function keyTier() external pure override returns (bytes32) {
         return TIER;
-    }
-
-    function generation() external pure override returns (uint256) {
-        return 0;
     }
 }
 
