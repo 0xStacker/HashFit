@@ -1,0 +1,41 @@
+.nav-bar {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.nav-items {
+  display: flex;
+  flex-direction: row;
+  font-size: 17px;
+  letter-spacing: 1px;
+  font-weight: 700;
+  font-family: Inter;
+  justify-content: space-between;
+  flex-grow: 0.1;
+}
+
+a {
+  color: rgb(19, 18, 18);
+  text-decoration: none;
+  font-family: Inter;
+  transition: color 0.2s ease-in-out;
+}
+
+.home-nav:hover,
+.shop-nav:hover,
+.about-nav:hover {
+  color: #c73044;
+}
+
+.logo-image {
+  width: 50px;
+}
+
+.socials {
+  display: flex;
+  flex-direction: row;
+  flex-grow: 0.01;
+  justify-content: space-between;
+}

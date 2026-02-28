@@ -1,0 +1,61 @@
+.project-section {
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+}
+
+.project-description {
+  font-size: 20px;
+  letter-spacing: 1.5px;
+  font-weight: 600;
+  line-height: 2;
+  margin: 10px;
+  max-width: 80%;
+}
+
+.mock-section {
+  display: flex;
+  max-width: 100%;
+  flex-wrap: wrap;
+  overflow-x: hidden;
+  align-self: center;
+  border-radius: 7px;
+  margin: 25px;
+}
+
+.mock {
+  width: 50%;
+  border-radius: 6px;
+  flex-grow: 0.7;
+}
+
+h2 {
+  letter-spacing: 3px;
+  font-weight: 700;
+  font-size: 40px;
+  margin: 10px;
+}
+
+.mock-section button,
+.mock-section p {
+  position: absolute;
+}
+
+.mock-section button:hover {
+  cursor: pointer;
+}
+
+.mock-section button {
+  margin-top: 350px;
+  margin-left: 15px;
+}
+
+.mock-section p {
+  color: white;
+  font-size: 40px;
+  letter-spacing: 1.5px;
+  font-weight: 600;
+  line-height: 2;
+  margin-top: 250px;
+  padding: 15px;
+}
