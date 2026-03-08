@@ -24,11 +24,18 @@
 .discount {
   display: flex;
   flex-direction: row;
+  align-items: center;
 }
 
 .old-price {
   color: rgb(79, 79, 79);
   text-decoration: line-through;
+}
+
+.actual-price {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
 }
 
 .discount-p {
@@ -41,9 +48,9 @@
 }
 
 .currencies {
-  position: relative;
-  right: 70px;
   display: flex;
+  position: relative;
+  left: 15px;
   flex-direction: row;
 }
 
@@ -83,7 +90,21 @@
   align-self: center;
   max-width: 150px;
 }
+.add {
+  background-color: transparent;
+  border: 0.3px solid grey;
+  padding: 3px 18px;
+  position: relative;
+  left: 10%;
+  margin: 3px 0px;
+  justify-self: center;
+  align-self: center;
+  font-family: Inter;
+}
 
+.add:hover {
+  cursor: pointer;
+}
 .usdt,
 .usdc {
   width: 15px;
