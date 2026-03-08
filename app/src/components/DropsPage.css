@@ -1,0 +1,68 @@
+.drops-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: start;
+  align-items: center;
+  margin-top: 15px;
+  margin-bottom: 15px;
+}
+
+.item-card-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  flex-wrap: wrap;
+}
+
+.market-search {
+  border: 0.3px solid grey;
+  border-radius: 20px;
+  padding: 7px 25px;
+  margin: 15px;
+}
+.filter {
+  background-color: transparent;
+  color: black;
+  padding: 0px 0px;
+  margin: 0px 0px;
+}
+
+.filter:hover {
+  cursor: pointer;
+}
+
+.searchIcon {
+  position: relative;
+  right: 235px;
+  top: 5px;
+}
+
+.latest-drops span,
+.market span {
+  letter-spacing: 1px;
+  margin: 0px 5px;
+  font-size: 18px;
+}
+h3 {
+  font-size: 30px;
+  margin: 0px;
+  font-weight: 700;
+  letter-spacing: 0.75px;
+}
+
+.market {
+  margin: 0px 30px;
+}
+
+.latest-drops {
+  margin: 30px;
+  margin-bottom: 0px;
+}
+
+.view-all {
+  background-color: black;
+  color: white;
+  font-size: 15px;
+  border-radius: 15px;
+  padding: 5px 10px;
+}

@@ -1,0 +1,72 @@
+.drop-container {
+  display: flex;
+  flex-direction: column;
+  border-radius: 10px;
+  margin: 0px 10px;
+  background-color: transparent;
+  max-width: 300px;
+  margin-bottom: 120px;
+}
+
+.cover-img {
+  border-radius: 7px;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.shop-link:hover {
+  transform: scale(1.05);
+}
+
+.img-sec p {
+  font-family: Inter;
+  font-size: 11px;
+}
+
+.drop-name {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  letter-spacing: 2px;
+  color: white;
+  position: relative;
+  bottom: 50px;
+  left: 5px;
+  margin: 0px;
+}
+
+.release-date {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  position: relative;
+  color: rgb(214, 214, 214);
+  bottom: 340px;
+  left: 10px;
+}
+
+.shop-link {
+  max-width: fit-content;
+  max-height: fit-content;
+  transition: transform 0.3s ease-in-out;
+}
+
+.items-left {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  position: relative;
+  color: rgb(175, 175, 175);
+  bottom: 68px;
+  left: 5px;
+}
+
+.img-sec {
+  width: 100%;
+  max-height: 200px;
+}
+
+.drop-details {
+  display: flex;
+  flex-direction: column;
+}
