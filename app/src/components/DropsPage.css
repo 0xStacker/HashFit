@@ -4,13 +4,21 @@
   justify-content: start;
   align-items: center;
   margin-top: 15px;
-  margin-bottom: 15px;
+}
+
+.latest-drops {
+  margin: 30px 0px;
+  padding: 0px 15px;
+}
+.shop-item {
+  display: flex;
+  flex-direction: column;
 }
 
 .item-card-container {
   display: flex;
   flex-direction: row;
-  justify-content: space-around;
+  justify-content: center;
   flex-wrap: wrap;
 }
 
@@ -54,9 +62,10 @@ h3 {
   margin: 0px 30px;
 }
 
-.latest-drops {
-  margin: 30px;
-  margin-bottom: 0px;
+.item-card-container {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: auto;
 }
 
 .view-all {

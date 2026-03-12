@@ -12,7 +12,7 @@ export type DropProps = {
 
 export function Drop(props: DropProps) {
   return (
-    <Link className="shop-link" to="/shop">
+    <Link className="shop-link" to={`/drops/${props.id}`}>
       <div className="drop-container">
         <div className="img-sec">
           {props.coverImg && (
@@ -23,9 +23,11 @@ export function Drop(props: DropProps) {
               <source src={props.coverVideo} type="video/mp4" />
             </video>
           )}
-          <span className="drop-name">
+        </div>
+        <div className="drop-details">
+          <div className="drop-name">
             <svg
-              fill="#e3e3e3"
+              fill="#1e1e1e"
               width="10px"
               height="10px"
               viewBox="0 0 36 36"
@@ -53,15 +55,15 @@ export function Drop(props: DropProps) {
               </g>
             </svg>
             <p className="">{props.name}</p>
-          </span>
-          <span className="items-left">
+          </div>
+          <div className="items-left">
             <svg
-              fill="#e3e3e3"
+              fill="#1e1e1e"
               width="10px"
               height="10px"
               viewBox="0 0 20 20"
               xmlns="http://www.w3.org/2000/svg"
-              stroke="#e3e3e3"
+              stroke="#000000"
             >
               <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
               <g
@@ -74,9 +76,9 @@ export function Drop(props: DropProps) {
               </g>
             </svg>
             <p className="">{props.totalItems as any} Unique Items</p>
-          </span>
+          </div>
 
-          <span className="release-date">
+          <div className="release-date">
             <svg
               viewBox="0 0 16 16"
               width="10px"
@@ -96,12 +98,12 @@ export function Drop(props: DropProps) {
                   fill-rule="evenodd"
                   clip-rule="evenodd"
                   d="M8 16C12.4183 16 16 12.4183 16 8C16 3.58172 12.4183 0 8 0C3.58172 0 0 3.58172 0 8C0 12.4183 3.58172 16 8 16ZM7 3V8.41421L10.2929 11.7071L11.7071 10.2929L9 7.58579V3H7Z"
-                  fill="#e3e3e3"
+                  fill="#1e1e1e"
                 ></path>{" "}
               </g>
             </svg>
             <p className="">{props.launchDate}</p>
-          </span>
+          </div>
         </div>
       </div>
     </Link>
