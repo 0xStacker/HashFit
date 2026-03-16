@@ -3,16 +3,18 @@
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 1000;
 }
 
 .nav-items {
   display: flex;
   flex-direction: row;
-  font-size: 17px;
-  letter-spacing: 1px;
-  font-weight: 700;
   font-family: Inter;
   justify-content: space-between;
+  align-items: center;
   flex-grow: 0.1;
 }
 
@@ -23,19 +25,10 @@ a {
   transition: color 0.2s ease-in-out;
 }
 
-.home-nav:hover,
-.shop-nav:hover,
-.about-nav:hover {
+/* .nav-item:hover {
   color: #c73044;
-}
+} */
 
 .logo-image {
   width: 50px;
-}
-
-.socials {
-  display: flex;
-  flex-direction: row;
-  flex-grow: 0.01;
-  justify-content: space-between;
 }

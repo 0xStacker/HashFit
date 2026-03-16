@@ -1,7 +1,9 @@
 import { Link } from "react-router-dom";
 import { HomeNav } from "./HomeNav";
 import { ShopNav } from "./ShopNav";
+import { Bag } from "../App";
 import "./NavBar.css";
+import { CardProps } from "./ItemCard";
 
 export function Logo() {
   return (
@@ -29,13 +31,15 @@ export function NavItem(props: NavItemProps) {
 
 type NavBarProps = {
   for: "shop" | "home";
+  bag: Bag;
+  keys: { legendary: number; mythic: number };
 };
 
 export function NavBar(props: NavBarProps) {
   return (
     <div className="nav-bar">
       {props.for === "home" && <HomeNav />}
-      {props.for === "shop" && <ShopNav />}
+      {props.for === "shop" && <ShopNav bag={props.bag} keys={props.keys} />}
     </div>
   );
 }
