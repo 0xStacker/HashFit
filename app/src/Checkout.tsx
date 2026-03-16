@@ -1,20 +1,44 @@
+import { useState } from "react";
 import { Bag, BagItemData } from "./App";
 import "./Checkout.css";
 import { NavBar } from "./components/NavBar";
+import { Link } from "react-router";
+import { DeliveryForm, DeliveryDetails } from "./components/DeliveryForm";
 
 type CheckOutProps = {
   bag: Bag;
   setBag: React.Dispatch<React.SetStateAction<Bag>>;
+  HashFitKeyData: {
+    keys: { mythic: number; legendary: number };
+    set: React.Dispatch<
+      React.SetStateAction<{
+        legendary: number;
+        mythic: number;
+      }>
+    >;
+  };
 };
 
 export function Checkout(props: CheckOutProps) {
+  const [showDeliveryForm, setShowDeliveryForm] = useState(false);
+  const [deliveryDetails, setDeliveryDetails] =
+    useState<DeliveryDetails | null>(null);
+
+  const handleDeliverySubmit = (details: DeliveryDetails) => {
+    setDeliveryDetails(details);
+    // Here you would typically proceed to payment processing
+    console.log("Delivery details submitted:", details);
+    alert("Delivery details saved! Proceeding to payment...");
+  };
+
   return (
     <>
-      <NavBar for="shop" bag={props.bag} />
+      <NavBar for="shop" bag={props.bag} keys={props.HashFitKeyData.keys} />
       <div className="items-checkout">
         <div className="item-box">
           <h3 className="bag-title">Bag({props.bag.items.size})</h3>
           {Array.from(props.bag.items.keys()).map((key: string) => {
+            // increament a cart item
             const add = () => {
               const oldBag = props.bag.items;
               const newBag: Bag = {
@@ -33,6 +57,7 @@ export function Checkout(props: CheckOutProps) {
               props.setBag(newBag);
             };
 
+            // Decreament a cart item
             const remove = () => {
               const oldBag = props.bag.items;
               if ((oldBag.get(key)?.amount as number) - 1 === 0) {
@@ -62,6 +87,8 @@ export function Checkout(props: CheckOutProps) {
               }
               props.setBag(newBag);
             };
+
+            ///
             return (
               <div className="item">
                 <div className="name-image">
@@ -140,15 +167,35 @@ export function Checkout(props: CheckOutProps) {
         </div>
 
         <div className="checkout">
-          <p> Bag Summary</p>
-          <span>
+          <h4 className="checkout-heading"> BAG SUMMARY </h4>
+          <span className="subtotal">
             Subtotal{" "}
             <span>
-              <img src="/assests/currency/usdc.svg"></img> {props.bag.subTotal}
+              <img className="usdc" src="/assests/currency/usdc.svg"></img>{" "}
+              <span className="sub-total-value">{props.bag.subTotal}</span>
             </span>
           </span>
+          <button
+            onClick={() => setShowDeliveryForm(true)}
+            className="checkout-button"
+            disabled={props.bag.items.size === 0}
+          >
+            Checkout{" "}
+            <span>
+              {" "}
+              <img className="usdc" src="/assests/currency/usdc.svg"></img>
+            </span>
+            {props.bag.subTotal}
+          </button>
         </div>
       </div>
+
+      {showDeliveryForm && (
+        <DeliveryForm
+          onSubmit={handleDeliverySubmit}
+          initialDetails={deliveryDetails || undefined}
+        />
+      )}
     </>
   );
 }

@@ -1,0 +1,100 @@
+.drop-detail-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 60%, #0f0f0f 100%);
+  color: #ffffff;
+  font-family: "Inter", sans-serif;
+}
+
+.drop-hero {
+  position: relative;
+  height: 35vh;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.drop-hero-media {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.drop-hero-img,
+.drop-hero-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(0.75) contrast(1.15);
+}
+
+.drop-hero-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+}
+.drop-hero-content {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.75);
+  padding: 0 20px;
+  max-width: 900px;
+}
+
+.p-drop-title {
+  font-size: 3rem;
+  margin: 0;
+  letter-spacing: 2px;
+}
+
+.p-drop-subtitle {
+  margin: 12px 0 0;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 1.1rem;
+}
+
+.drop-meta {
+  margin: 6px 0 0;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.95rem;
+}
+
+.p-drop-items {
+  max-width: 1200px;
+  margin: 60px auto 80px;
+  padding: 0 20px;
+}
+
+.p-drop-items h2 {
+  font-size: 2rem;
+  margin-bottom: 24px;
+  letter-spacing: 1px;
+}
+
+.drop-items-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 30px;
+}
+
+.drop-missing {
+  padding: 120px 24px;
+  text-align: center;
+}
+
+.drop-missing h2 {
+  font-size: 2.5rem;
+  margin-bottom: 12px;
+}
+
+.drop-missing p {
+  color: rgba(255, 255, 255, 0.75);
+}

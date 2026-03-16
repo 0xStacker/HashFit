@@ -1,0 +1,102 @@
+.delivery-form-container {
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0px 0px 10px rgb(236, 235, 235);
+  padding: 20px;
+  max-width: 600px;
+  margin: 20px auto;
+}
+
+.delivery-form-title {
+  color: rgb(45, 45, 45);
+  font-size: 24px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.delivery-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.form-row {
+  display: flex;
+  gap: 15px;
+}
+
+.form-row .form-group {
+  flex: 1;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  font-weight: 500;
+  margin-bottom: 5px;
+  color: rgb(45, 45, 45);
+}
+
+.form-group input {
+  padding: 10px 12px;
+  border: 1px solid rgb(181, 181, 181);
+  border-radius: 6px;
+  font-size: 16px;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: rgb(7, 7, 7);
+}
+
+.form-group input.error {
+  border-color: #dc3545;
+}
+
+.error-message {
+  color: #dc3545;
+  font-size: 14px;
+  margin-top: 3px;
+}
+
+.delivery-submit-btn {
+  background-color: rgb(7, 7, 7);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 12px 20px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-top: 10px;
+}
+
+.delivery-submit-btn:hover {
+  background-color: rgb(45, 45, 45);
+}
+
+.delivery-submit-btn:active {
+  background-color: rgb(0, 0, 0);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .delivery-form-container {
+    margin: 20px 15px;
+    padding: 15px;
+  }
+
+  .form-row {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .delivery-form-title {
+    font-size: 20px;
+  }
+}

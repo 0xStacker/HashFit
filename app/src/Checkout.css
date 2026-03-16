@@ -4,8 +4,19 @@
   max-width: 60%;
   border-radius: 10px;
   box-shadow: 0px 0px 10px rgb(236, 235, 235);
-  margin: 15px;
   padding: 5px 20px;
+  flex-grow: 0.75;
+  margin: 0px 30px;
+}
+
+.checkout-heading {
+  color: rgb(45, 45, 45);
+}
+.items-checkout {
+  display: flex;
+  flex-direction: row;
+  margin: 15px 15px;
+  align-items: start;
 }
 
 .c-item-image {
@@ -27,6 +38,38 @@
 .decreament {
   border: none;
   background-color: transparent;
+}
+
+.checkout {
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0px 0px 10px rgb(236, 235, 235);
+  max-height: fit-content;
+  padding: 10px 10px;
+  border-radius: 10px;
+  flex-grow: 0.2;
+}
+.sub-total-value {
+  font-size: 22px;
+}
+
+.subtotal {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 18px;
+  border-bottom: 0.4px solid rgb(181, 181, 181);
+  margin-bottom: 10px;
+}
+
+.checkout-button {
+  border: none;
+  background-color: rgb(7, 7, 7);
+  font-size: 18px;
+  border-radius: 6px;
+  color: white;
+  padding: 7px 5px;
 }
 
 .increament:hover,

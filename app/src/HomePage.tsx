@@ -14,6 +14,7 @@ export function Home() {
       <NavBar
         for="home"
         bag={{ items: new Map<string, BagItemData>(), subTotal: 0 }}
+        keys={{ legendary: 0, mythic: 0 }}
       />
       <HeroDesc />
       <ProjectSection />

@@ -4,7 +4,7 @@ import "./Drop.css";
 export type DropProps = {
   name: string;
   launchDate: string;
-  totalItems: Number;
+  totalItems: number | Number;
   coverImg?: string;
   coverVideo?: string;
   id: string;
