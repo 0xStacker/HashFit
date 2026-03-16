@@ -9,6 +9,14 @@
   padding-top: 15px;
 }
 
+.card:hover {
+  box-shadow: 0px 0px 6px rgb(213, 213, 213);
+}
+
+.card:hover .add {
+  display: block;
+}
+
 .item-details {
   background-color: #191919;
   width: 100%;
@@ -25,6 +33,28 @@
   display: flex;
   flex-direction: row;
   align-items: center;
+}
+.card a {
+  align-self: center;
+}
+
+.add {
+  background-color: transparent;
+  border: 0.3px solid grey;
+  border-radius: 15px;
+  color: white;
+  padding: 3px 18px;
+  position: relative;
+  left: 10%;
+  margin: 3px 0px;
+  align-self: center;
+  font-family: Inter;
+}
+
+.add:hover {
+  cursor: pointer;
+  align-items: center;
+  border-color: white;
 }
 
 .old-price {
@@ -87,24 +117,9 @@
 }
 
 .item-image {
-  align-self: center;
   max-width: 150px;
 }
-.add {
-  background-color: transparent;
-  border: 0.3px solid grey;
-  padding: 3px 18px;
-  position: relative;
-  left: 10%;
-  margin: 3px 0px;
-  justify-self: center;
-  align-self: center;
-  font-family: Inter;
-}
 
-.add:hover {
-  cursor: pointer;
-}
 .usdt,
 .usdc {
   width: 15px;

@@ -32,7 +32,7 @@ export function HeroDesc() {
           designed for long-term believers. Entry is limited. Recognition is
           permanent.
         </p>
-        <Button name="Coming Soon" />
+        <button className="cta-button"> Coming soon </button>
       </div>
       <div className="graphics">
         <img className="cover" src={slides[current]} alt={`slide-${current}`} />

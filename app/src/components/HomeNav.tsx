@@ -51,7 +51,7 @@ export function HomeNav() {
       <div className="nav-items">
         <NavItem text="Home" id="home" ref="/" />
         <NavItem text="Drops" id="" ref="/shop/drop" />
-        <NavItem text="Exclusives" id="" ref="/shop/exclusive" />
+        <NavItem text="Exclusives" id="" ref="/exclusive" />
         <NavItem text="About" id="" ref="/" />
       </div>
       <SocialItems />
