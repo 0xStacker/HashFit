@@ -10,23 +10,21 @@
   font-weight: 600;
   line-height: 2;
   margin: 10px;
-  max-width: 80%;
 }
 
 .mock-section {
   display: flex;
+  flex-direction: column;
   max-width: 100%;
-  flex-wrap: wrap;
-  overflow-x: hidden;
   align-self: center;
-  border-radius: 7px;
   margin: 25px;
+  justify-content: center;
 }
 
 .mock {
-  width: 50%;
+  max-width: 70vw;
   border-radius: 6px;
-  flex-grow: 0.7;
+  flex-grow: 1;
 }
 
 h2 {
@@ -36,26 +34,23 @@ h2 {
   margin: 10px;
 }
 
-.mock-section button,
-.mock-section p {
-  position: absolute;
-}
-
-.mock-section button:hover {
-  cursor: pointer;
-}
-
-.mock-section button {
-  margin-top: 350px;
-  margin-left: 15px;
-}
-
-.mock-section p {
+.shop-button {
+  position: relative;
+  bottom: 50px;
+  left: 15px;
+  width: fit-content;
+  padding: 10px 10px;
   color: white;
-  font-size: 40px;
+  border-radius: 20px;
+  background-color: #c73044;
+}
+
+.shop-cta {
+  position: relative;
+  bottom: 200px;
+  color: white;
+  font-size: 30px;
   letter-spacing: 1.5px;
-  font-weight: 600;
-  line-height: 2;
-  margin-top: 250px;
-  padding: 15px;
+  font-weight: 700;
+  left: 15px;
 }

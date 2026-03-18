@@ -1,5 +1,5 @@
 import "./ProjectSection.css";
-import { Button } from "./Button";
+import { Link } from "react-router-dom";
 export function ProjectSection() {
   return (
     <div className="project-section">
@@ -21,8 +21,10 @@ export function ProjectSection() {
       </p>
       <div className="mock-section">
         <img className="mock" src="/assests/mocks/main.png" alt="" />
-        <Button name="Shop Now"></Button>
-        <p>Outwork The Croud</p>
+        <Link className="shop-button" to="/shop">
+          Shop Now
+        </Link>
+        <p className="shop-cta">Outwork The Croud</p>
         {/* <img className="mock" src="/assests/mocks/mock2.png" alt=""></img>
         <img className="mock" src="/assests/mocks/mock3.png" alt=""></img> */}
         {/* <img className="mock" src="/assests/mocks/mock4.png" alt=""></img>

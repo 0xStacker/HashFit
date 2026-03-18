@@ -16,6 +16,8 @@ export type BagItemData = {
   key: string;
   gen: string;
   amount: number;
+  priceInKeys?: number;
+  keysUsed?: number;
 };
 
 export type Bag = {
@@ -33,7 +35,7 @@ export function App() {
     items: new Map<string, BagItemData>(),
     subTotal: 0,
   };
-  const [keys, setKeys] = useState({ legendary: 0, mythic: 0 });
+  const [keys, setKeys] = useState({ legendary: 5, mythic: 5 });
   const HashFitKeys = {
     keys: keys,
     set: setKeys,

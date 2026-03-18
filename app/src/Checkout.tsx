@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Bag, BagItemData } from "./App";
 import "./Checkout.css";
 import { NavBar } from "./components/NavBar";
-import { Link } from "react-router";
+import { Link } from "react-router-dom";
 import { DeliveryForm, DeliveryDetails } from "./components/DeliveryForm";
 
 type CheckOutProps = {
@@ -20,6 +20,7 @@ type CheckOutProps = {
 };
 
 export function Checkout(props: CheckOutProps) {
+  const [totalKeyUsed, settotalKeyUsed] = useState(0);
   const [showDeliveryForm, setShowDeliveryForm] = useState(false);
   const [deliveryDetails, setDeliveryDetails] =
     useState<DeliveryDetails | null>(null);
@@ -29,6 +30,16 @@ export function Checkout(props: CheckOutProps) {
     // Here you would typically proceed to payment processing
     console.log("Delivery details submitted:", details);
     alert("Delivery details saved! Proceeding to payment...");
+    const contractQuery = Array.from(props.bag.items.values()).map(
+      (v: BagItemData) => {
+        return {
+          itemId: v.gen,
+          amount: v.amount,
+          useKey: v.priceInKeys === undefined ? false : true,
+        };
+      },
+    );
+    console.log(contractQuery);
   };
 
   return (
@@ -38,54 +49,91 @@ export function Checkout(props: CheckOutProps) {
         <div className="item-box">
           <h3 className="bag-title">Bag({props.bag.items.size})</h3>
           {Array.from(props.bag.items.keys()).map((key: string) => {
-            // increament a cart item
-            const add = () => {
-              const oldBag = props.bag.items;
-              const newBag: Bag = {
-                items: oldBag,
-                subTotal:
-                  props.bag.subTotal + (oldBag.get(key)?.price as number),
-              };
-
-              if (newBag.items.has(key)) {
-                newBag.items.set(key, {
-                  ...(newBag.items.get(key) as BagItemData),
-                  amount: (newBag.items.get(key)?.amount as number) + 1,
-                });
-              }
-
-              props.setBag(newBag);
+            const getSubTotal = (bagItems: Map<string, BagItemData>) => {
+              let total = 0;
+              bagItems.forEach((item) => {
+                const keysUsed = item.keysUsed ?? 0;
+                total += item.price * Math.max(0, item.amount - keysUsed);
+              });
+              return total;
             };
 
-            // Decreament a cart item
+            const add = () => {
+              const oldBag = new Map(props.bag.items);
+              const currentItem = oldBag.get(key);
+              if (!currentItem) return;
+
+              const newAmount = currentItem.amount + 1;
+              oldBag.set(key, {
+                ...currentItem,
+                amount: newAmount,
+                keysUsed: Math.min(currentItem.keysUsed ?? 0, newAmount),
+              });
+
+              props.setBag({
+                items: oldBag,
+                subTotal: getSubTotal(oldBag),
+              });
+            };
+
             const remove = () => {
-              const oldBag = props.bag.items;
-              if ((oldBag.get(key)?.amount as number) - 1 === 0) {
-                const newBag: Bag = {
+              const oldBag = new Map(props.bag.items);
+              const currentItem = oldBag.get(key);
+              if (!currentItem) return;
+
+              const newAmount = currentItem.amount - 1;
+              if (newAmount <= 0) {
+                oldBag.delete(key);
+                props.setBag({
                   items: oldBag,
-                  subTotal:
-                    props.bag.subTotal -
-                    (props.bag.items.get(key)?.price as number),
-                };
-                newBag.items.delete(key);
-                props.setBag(newBag);
+                  subTotal: getSubTotal(oldBag),
+                });
                 return;
               }
 
-              const newBag: Bag = {
-                items: oldBag,
-                subTotal:
-                  props.bag.subTotal -
-                  (props.bag.items.get(key)?.price as number),
-              };
+              oldBag.set(key, {
+                ...currentItem,
+                amount: newAmount,
+                keysUsed: Math.min(currentItem.keysUsed ?? 0, newAmount),
+              });
 
-              if (newBag.items.has(key)) {
-                newBag.items.set(key, {
-                  ...(newBag.items.get(key) as BagItemData),
-                  amount: (newBag.items.get(key)?.amount as number) - 1,
-                });
-              }
-              props.setBag(newBag);
+              props.setBag({
+                items: oldBag,
+                subTotal: getSubTotal(oldBag),
+              });
+            };
+
+            const useKey = () => {
+              const oldBag = new Map(props.bag.items);
+              const currentItem = oldBag.get(key);
+              if (!currentItem) return;
+
+              const priceInKeys = currentItem.priceInKeys ?? 0;
+              if (priceInKeys <= 0) return;
+
+              const keysAlreadyUsed = currentItem.keysUsed ?? 0;
+              const remaining = currentItem.amount - keysAlreadyUsed;
+              if (remaining <= 0) return;
+
+              const requiredKeys = remaining * priceInKeys;
+              if (props.HashFitKeyData.keys.mythic < requiredKeys) return;
+
+              oldBag.set(key, {
+                ...currentItem,
+                keysUsed: currentItem.amount,
+              });
+
+              props.HashFitKeyData.set({
+                ...props.HashFitKeyData.keys,
+                mythic: props.HashFitKeyData.keys.mythic - requiredKeys,
+              });
+
+              props.setBag({
+                items: oldBag,
+                subTotal: getSubTotal(oldBag),
+              });
+
+              settotalKeyUsed(totalKeyUsed + requiredKeys);
             };
 
             ///
@@ -98,12 +146,109 @@ export function Checkout(props: CheckOutProps) {
                   />
                   <h3>{props.bag.items.get(key)?.name}</h3>
                   <span className="c-price-sec">
-                    <img className="usdc" src="/assests/currency/usdc.svg" />
+                    <img
+                      className="usdc"
+                      src="/assests/currency/usdc.svg"
+                      alt="USDC"
+                    />
                     {props.bag.items.get(key)?.price}
+                    {(props.bag.items.get(key)?.priceInKeys as number) > 0 && (
+                      <>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          x="0px"
+                          y="0px"
+                          width="15px"
+                          height="15px"
+                          viewBox="0,0,256,256"
+                        >
+                          <g
+                            fill="none"
+                            fill-rule="nonzero"
+                            stroke="none"
+                            stroke-width="1"
+                            stroke-linecap="butt"
+                            stroke-linejoin="miter"
+                            stroke-miterlimit="10"
+                            stroke-dasharray=""
+                            stroke-dashoffset="0"
+                            font-family="none"
+                            font-weight="none"
+                            font-size="none"
+                            text-anchor="none"
+                          >
+                            <g transform="scale(5.33333,5.33333)">
+                              <path
+                                d="M30,41l-4,4h-4l-4,-4v-20h12v8l-2,2l2,2v2l-2,2l2,2z"
+                                fill="#fa5252"
+                              ></path>
+                              <path
+                                d="M38,7.8c-0.5,-1.8 -2,-3.1 -3.7,-3.6c-2.4,-0.5 -6.1,-1.2 -10.3,-1.2c-4.2,0 -7.9,0.7 -10.3,1.2c-1.7,0.5 -3.2,1.8 -3.7,3.6c-0.5,1.7 -1,4.1 -1,6.7c0,2.6 0.5,5 1,6.7c0.5,1.8 1.9,3.1 3.7,3.5c2.4,0.6 6.1,1.3 10.3,1.3c4.2,0 7.9,-0.7 10.3,-1.2c1.8,-0.4 3.2,-1.8 3.7,-3.5c0.5,-1.7 1,-4.1 1,-6.7c0,-2.7 -0.5,-5.1 -1,-6.8zM29,13h-10c-1.1,0 -2,-0.9 -2,-2v-2c0,-0.6 3.1,-1 7,-1c3.9,0 7,0.4 7,1v2c0,1.1 -0.9,2 -2,2z"
+                                fill="#fa5252"
+                              ></path>
+                              <path d="M23,26h2v19h-2z" fill="#d68600"></path>
+                            </g>
+                          </g>
+                        </svg>
+                        {props.bag.items.get(key)?.priceInKeys}
+                      </>
+                    )}
                   </span>
                 </div>
 
                 <div className="amount-sec">
+                  {(() => {
+                    const item = props.bag.items.get(key);
+                    const priceInKeys = item?.priceInKeys ?? 0;
+                    const keysUsed = item?.keysUsed ?? 0;
+                    const remaining = (item?.amount ?? 0) - keysUsed;
+                    const needed = remaining * priceInKeys;
+                    return (
+                      priceInKeys > 0 &&
+                      remaining > 0 &&
+                      needed <= props.HashFitKeyData.keys.mythic && (
+                        <button className="use-key" onClick={useKey}>
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            x="0px"
+                            y="0px"
+                            width="15px"
+                            height="15px"
+                            viewBox="0,0,256,256"
+                          >
+                            <g
+                              fill="none"
+                              fill-rule="nonzero"
+                              stroke="none"
+                              stroke-width="1"
+                              stroke-linecap="butt"
+                              stroke-linejoin="miter"
+                              stroke-miterlimit="10"
+                              stroke-dasharray=""
+                              stroke-dashoffset="0"
+                              font-family="none"
+                              font-weight="none"
+                              font-size="none"
+                              text-anchor="none"
+                            >
+                              <g transform="scale(5.33333,5.33333)">
+                                <path
+                                  d="M30,41l-4,4h-4l-4,-4v-20h12v8l-2,2l2,2v2l-2,2l2,2z"
+                                  fill="#fa5252"
+                                ></path>
+                                <path
+                                  d="M38,7.8c-0.5,-1.8 -2,-3.1 -3.7,-3.6c-2.4,-0.5 -6.1,-1.2 -10.3,-1.2c-4.2,0 -7.9,0.7 -10.3,1.2c-1.7,0.5 -3.2,1.8 -3.7,3.6c-0.5,1.7 -1,4.1 -1,6.7c0,2.6 0.5,5 1,6.7c0.5,1.8 1.9,3.1 3.7,3.5c2.4,0.6 6.1,1.3 10.3,1.3c4.2,0 7.9,-0.7 10.3,-1.2c1.8,-0.4 3.2,-1.8 3.7,-3.5c0.5,-1.7 1,-4.1 1,-6.7c0,-2.7 -0.5,-5.1 -1,-6.8zM29,13h-10c-1.1,0 -2,-0.9 -2,-2v-2c0,-0.6 3.1,-1 7,-1c3.9,0 7,0.4 7,1v2c0,1.1 -0.9,2 -2,2z"
+                                  fill="#fa5252"
+                                ></path>
+                                <path d="M23,26h2v19h-2z" fill="#d68600"></path>
+                              </g>
+                            </g>
+                          </svg>
+                          <span className="key-amount">Use {needed} keys</span>
+                        </button>
+                      )
+                    );
+                  })()}
                   <button className="increament" onClick={add}>
                     <svg
                       width="25px"
@@ -171,8 +316,51 @@ export function Checkout(props: CheckOutProps) {
           <span className="subtotal">
             Subtotal{" "}
             <span>
-              <img className="usdc" src="/assests/currency/usdc.svg"></img>{" "}
+              <img
+                className="usdc"
+                src="/assests/currency/usdc.svg"
+                alt="USDC"
+              />{" "}
               <span className="sub-total-value">{props.bag.subTotal}</span>
+              <span>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  x="0px"
+                  y="0px"
+                  width="15px"
+                  height="15px"
+                  viewBox="0,0,256,256"
+                >
+                  <g
+                    fill="none"
+                    fill-rule="nonzero"
+                    stroke="none"
+                    stroke-width="1"
+                    stroke-linecap="butt"
+                    stroke-linejoin="miter"
+                    stroke-miterlimit="10"
+                    stroke-dasharray=""
+                    stroke-dashoffset="0"
+                    font-family="none"
+                    font-weight="none"
+                    font-size="none"
+                    text-anchor="none"
+                  >
+                    <g transform="scale(5.33333,5.33333)">
+                      <path
+                        d="M30,41l-4,4h-4l-4,-4v-20h12v8l-2,2l2,2v2l-2,2l2,2z"
+                        fill="#fa5252"
+                      ></path>
+                      <path
+                        d="M38,7.8c-0.5,-1.8 -2,-3.1 -3.7,-3.6c-2.4,-0.5 -6.1,-1.2 -10.3,-1.2c-4.2,0 -7.9,0.7 -10.3,1.2c-1.7,0.5 -3.2,1.8 -3.7,3.6c-0.5,1.7 -1,4.1 -1,6.7c0,2.6 0.5,5 1,6.7c0.5,1.8 1.9,3.1 3.7,3.5c2.4,0.6 6.1,1.3 10.3,1.3c4.2,0 7.9,-0.7 10.3,-1.2c1.8,-0.4 3.2,-1.8 3.7,-3.5c0.5,-1.7 1,-4.1 1,-6.7c0,-2.7 -0.5,-5.1 -1,-6.8zM29,13h-10c-1.1,0 -2,-0.9 -2,-2v-2c0,-0.6 3.1,-1 7,-1c3.9,0 7,0.4 7,1v2c0,1.1 -0.9,2 -2,2z"
+                        fill="#fa5252"
+                      ></path>
+                      <path d="M23,26h2v19h-2z" fill="#d68600"></path>
+                    </g>
+                  </g>
+                </svg>
+                <span className="sub-total-value">{totalKeyUsed}</span>
+              </span>
             </span>
           </span>
           <button
@@ -183,7 +371,11 @@ export function Checkout(props: CheckOutProps) {
             Checkout{" "}
             <span>
               {" "}
-              <img className="usdc" src="/assests/currency/usdc.svg"></img>
+              <img
+                className="usdc"
+                src="/assests/currency/usdc.svg"
+                alt="USDC"
+              />{" "}
             </span>
             {props.bag.subTotal}
           </button>

@@ -81,6 +81,7 @@ export function NormalDropPage(props: NormalDropPageProps) {
                 key: item.key,
                 gen: item.gen,
                 amount: 0,
+                keysUsed: 0,
               }}
               bag={{ current: props.bag, setBag: props.setBag }}
             />

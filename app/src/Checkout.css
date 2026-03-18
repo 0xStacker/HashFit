@@ -27,6 +27,19 @@
   margin: 15px;
 }
 
+.use-key {
+  border: none;
+  border-radius: 15px;
+  background-color: rgb(252, 230, 230);
+  color: rgb(191, 104, 104);
+  padding: 3px 5px;
+}
+
+.use-key::active {
+  border-width: 0.75px;
+  border-color: rgb(191, 104, 104);
+}
+
 .name-image {
   display: flex;
   flex-direction: row;

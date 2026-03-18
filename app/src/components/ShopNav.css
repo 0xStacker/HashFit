@@ -1,0 +1,71 @@
+.cart-section {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  flex-grow: 0.05;
+  font-family: Inter;
+  font-weight: 700px;
+  font-size: 17px;
+}
+
+.key {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-grow: 0.5;
+  margin: 5px;
+}
+
+.key-amount {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.wallet-section {
+  border: 1px solid #c73044;
+}
+.cart-amount {
+  position: relative;
+  top: 2px;
+  color: white;
+  font-weight: 600;
+  font-size: 10px;
+  right: 18px;
+}
+
+.key-section {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 20px;
+}
+
+#drop {
+  font-weight: 700;
+  font-size: 25px;
+}
+
+.cart {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.connect {
+  font-family: Inter;
+  letter-spacing: 1;
+  border: none;
+  padding: 5px 5px;
+  border-radius: 7px;
+  font-weight: 500;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.bag-text {
+  font-weight: 700;
+  font-size: 14px;
+}

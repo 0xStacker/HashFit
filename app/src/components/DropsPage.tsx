@@ -122,6 +122,7 @@ function Market(props: DropProps) {
             key: item.key,
             gen: item.gen,
             amount: 0,
+            keysUsed: 0,
           };
           return <ItemCard details={bagItem} bag={props.bag} />;
         })}

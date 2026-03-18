@@ -82,6 +82,8 @@ export function DropDetailPage(props: DropDetailPageProps) {
                 key: item.key,
                 gen: item.gen,
                 amount: 0,
+                keysUsed: 0,
+                priceInKeys: item.priceInKeys,
               }}
               bag={{ current: props.bag, setBag: props.setBag }}
             />
