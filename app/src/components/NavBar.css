@@ -1,0 +1,34 @@
+.nav-bar {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 1000;
+}
+
+.nav-items {
+  display: flex;
+  flex-direction: row;
+  font-family: Inter;
+  justify-content: space-between;
+  align-items: center;
+  flex-grow: 0.1;
+}
+
+a {
+  color: rgb(19, 18, 18);
+  text-decoration: none;
+  font-family: Inter;
+  transition: color 0.2s ease-in-out;
+}
+
+/* .nav-item:hover {
+  color: #c73044;
+} */
+
+.logo-image {
+  width: 50px;
+}
