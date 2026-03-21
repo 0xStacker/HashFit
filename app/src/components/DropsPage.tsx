@@ -121,6 +121,7 @@ function Market(props: DropProps) {
             discount: item.discount,
             key: item.key,
             gen: item.gen,
+            itemId: item.itemId,
             amount: 0,
             keysUsed: 0,
           };

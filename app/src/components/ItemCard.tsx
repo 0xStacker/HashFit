@@ -24,6 +24,7 @@ export type CardProps = {
   discount: number;
   key: string;
   gen: string;
+  itemId: number;
 };
 
 type BagItem = {

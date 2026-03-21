@@ -119,6 +119,7 @@ export const items: CardProps[] = [
     discount: 0,
     gen: "0x60fC61c50186a4012AE9153c47e2643544cdE30C",
     key: crypto.randomUUID(),
+    itemId: 1,
   },
   {
     name: "Genesis M-10",
@@ -127,6 +128,7 @@ export const items: CardProps[] = [
     discount: 0,
     gen: "0x9661A6F57F5Bc7bA370e01C8E1f2BEdF185e06c4",
     key: crypto.randomUUID(),
+    itemId: 2,
   },
 
   {
@@ -136,6 +138,7 @@ export const items: CardProps[] = [
     discount: 500,
     gen: "0x1703b33d2e6815baf2d69d5e74d37b8da0fc023a",
     key: crypto.randomUUID(),
+    itemId: 1,
   },
 
   {
@@ -145,6 +148,7 @@ export const items: CardProps[] = [
     discount: 0,
     gen: "0x52346350618d1Ff566511385BA79e9875c0955Ab",
     key: crypto.randomUUID(),
+    itemId: 2,
   },
   {
     name: "Genesis M-10",
@@ -153,6 +157,7 @@ export const items: CardProps[] = [
     discount: 0,
     gen: "0x9661A6F57F5Bc7bA370e01C8E1f2BEdF185e06c4",
     key: crypto.randomUUID(),
+    itemId: 3,
   },
 ];
 
@@ -165,6 +170,7 @@ export const premiumItems = [
     gen: "0x60fC61c50186a4012AE9153c47e2643544cdE30C",
     key: crypto.randomUUID(),
     priceInKeys: 3,
+    itemId: 1,
   },
   {
     name: "Genesis M-10",
@@ -174,6 +180,7 @@ export const premiumItems = [
     gen: "0x9661A6F57F5Bc7bA370e01C8E1f2BEdF185e06c4",
     key: crypto.randomUUID(),
     priceInKeys: 1,
+    itemId: 2,
   },
 
   {
@@ -184,6 +191,7 @@ export const premiumItems = [
     gen: "0x1703b33d2e6815baf2d69d5e74d37b8da0fc023a",
     key: crypto.randomUUID(),
     priceInKeys: 1,
+    itemId: 3,
   },
 
   {
@@ -194,6 +202,7 @@ export const premiumItems = [
     gen: "0x52346350618d1Ff566511385BA79e9875c0955Ab",
     key: crypto.randomUUID(),
     priceInKeys: 2,
+    itemId: 4,
   },
   {
     name: "Genesis M-10",
@@ -203,5 +212,6 @@ export const premiumItems = [
     gen: "0x9661A6F57F5Bc7bA370e01C8E1f2BEdF185e06c4",
     key: crypto.randomUUID(),
     priceInKeys: 1,
+    itemId: 5,
   },
 ];
