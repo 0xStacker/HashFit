@@ -80,6 +80,7 @@ export function DropDetailPage(props: DropDetailPageProps) {
                 price: item.price,
                 discount: item.discount,
                 key: item.key,
+                itemId: item.itemId,
                 gen: item.gen,
                 amount: 0,
                 keysUsed: 0,

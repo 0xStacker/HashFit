@@ -15,6 +15,7 @@ export type BagItemData = {
   discount: number;
   key: string;
   gen: string;
+  itemId: number;
   amount: number;
   priceInKeys?: number;
   keysUsed?: number;

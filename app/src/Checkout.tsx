@@ -4,6 +4,7 @@ import "./Checkout.css";
 import { NavBar } from "./components/NavBar";
 import { Link } from "react-router-dom";
 import { DeliveryForm, DeliveryDetails } from "./components/DeliveryForm";
+import { baseGoerli } from "viem/chains";
 
 type CheckOutProps = {
   bag: Bag;
@@ -19,6 +20,22 @@ type CheckOutProps = {
   };
 };
 
+type SaleItem = {
+  itemId: number;
+  amount: number;
+};
+
+type RouterInput = {
+  gen: string;
+  items: SaleItem[];
+  proof: [];
+};
+
+type KeysRouterInput = {
+  gen: string;
+  item: SaleItem;
+  proof: [];
+};
 export function Checkout(props: CheckOutProps) {
   const [totalKeyUsed, settotalKeyUsed] = useState(0);
   const [showDeliveryForm, setShowDeliveryForm] = useState(false);
@@ -30,16 +47,44 @@ export function Checkout(props: CheckOutProps) {
     // Here you would typically proceed to payment processing
     console.log("Delivery details submitted:", details);
     alert("Delivery details saved! Proceeding to payment...");
-    const contractQuery = Array.from(props.bag.items.values()).map(
-      (v: BagItemData) => {
-        return {
-          itemId: v.gen,
-          amount: v.amount,
-          useKey: v.priceInKeys === undefined ? false : true,
-        };
-      },
-    );
-    console.log(contractQuery);
+    const items = Array.from(props.bag.items.values());
+    const paidRouterInput = new Map<string, RouterInput>();
+    const keysRouterInput = [];
+    for (const i of items) {
+      const saleItem: SaleItem = {
+        itemId: i.itemId,
+        amount: i.amount,
+      };
+      // Route purchases involving keys to the key router
+      if ((i.keysUsed as number) > 0) {
+        keysRouterInput.push({
+          gen: i.gen,
+          item: saleItem,
+          proof: [],
+        });
+        // Route paid purchases to paid router
+      } else {
+        if (paidRouterInput.has(i.gen)) {
+          const oldItems = paidRouterInput.get(i.gen)?.items as SaleItem[];
+          oldItems.push(saleItem);
+          paidRouterInput.set(i.gen, {
+            gen: i.gen,
+            items: oldItems,
+            proof: [],
+          });
+        } else {
+          paidRouterInput.set(i.gen, {
+            gen: i.gen,
+            items: [saleItem],
+            proof: [],
+          });
+        }
+      }
+    }
+
+    // props.bag.items.clear();
+    console.log(Array.from(paidRouterInput.values()));
+    console.log(keysRouterInput);
   };
 
   return (
