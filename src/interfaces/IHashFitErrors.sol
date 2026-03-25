@@ -8,8 +8,7 @@ interface IHashFitErrors {
     // Emitted after a successful purchase of an item
     event PurchaseAndClaim(uint256 item, uint256 amount, bool key);
     // Emitted when a key is succesfully redeemed
-    event RedeemKey(address redeemer, uint256 keyGen, uint256 keyId);
-
+    event RedeemKey(address redeemer, uint256 keyId);
     // Thrown when a purchase is attempted before drop sale begins
     error SaleNotStarted();
     // Thrown when user tries to access admin functionalitiesd
@@ -24,7 +23,7 @@ interface IHashFitErrors {
     // Thrown when user does not provide enough keys to exchange for n drop items
     error InsufficientKeys(address);
     // Thrown when user tries to use a key that does not belong to them
-    error UnauthorizedKeyUsage(uint256, uint256);
+    error UnauthorizedKeyUsage(uint256);
     // Thrown when key redeem fails
     error UnableToTransferKey();
     // Thrown when user does not provide enough keys to exchange for n drop items

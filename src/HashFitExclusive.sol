@@ -32,22 +32,22 @@ contract HashFitExclusive is HashFitCore {
     }
 
     // Thrown when a non whitelisted user attempts a purchase
-    error NotWhiteListed();
+    error NotWhiteListed(address _buyer, bytes32[] proof);
+
     // Enforce whitelist priviledges
-    modifier onlyWhitelist(bytes32[] memory proof) {
-        if (!proof.verify(ROOT, keccak256(abi.encode(msg.sender)))) {
-            revert NotWhiteListed();
-        }
-        _;
-    }
+    // modifier onlyWhitelist(bytes32[] memory proof) {
+    //     if (!proof.verify(ROOT, keccak256(abi.encodePacked(tx.origin)))) {
+    //         revert NotWhiteListed(tx.origin, proof);
+    //     }
+    //     _;
+    // }
 
     /// @inheritdoc HashFitCore
     /// @param proof is the merkle proof used to validate user
     function purchaseAndClaim(HashFitTypes.SaleItem[] memory _items, bytes32[] memory proof)
         external
         payable
-        override
-        onlyWhitelist(proof)
+        override /*onlyWhitelist (proof) */
         nonReentrant
     {
         _purchaseAndClaim(_items);
@@ -70,13 +70,13 @@ contract HashFitExclusive is HashFitCore {
         for (uint256 i; i < keyIds.length; i++) {
             uint256 keyId = keyIds[i];
 
-            if (msg.sender != IERC721A(mythic).ownerOf(keyId)) {
+            if (tx.origin != IERC721A(mythic).ownerOf(keyId)) {
                 revert UnauthorizedKeyUsage(keyId);
             }
             // Send key to burner and mint identity SBT
             bytes memory burnInstruction = abi.encode(address(mythic), keyId);
-            try IERC721A(mythic).safeTransferFrom(msg.sender, FACTORY.keyBurner(), keyId, burnInstruction) {
-                emit RedeemKey(msg.sender, keyId);
+            try IERC721A(mythic).safeTransferFrom(tx.origin, FACTORY.keyBurner(), keyId, burnInstruction) {
+                emit RedeemKey(tx.origin, keyId);
             } catch {
                 revert UnableToTransferKey();
             }
@@ -84,6 +84,6 @@ contract HashFitExclusive is HashFitCore {
         currentSupply[_item.itemId] += _item.amount;
         totalSoldItems += _item.amount;
         emit PurchaseAndClaim(_item.itemId, _item.amount, true);
-        _mint(msg.sender, _item.amount, _item.itemId, "");
+        _mint(tx.origin, _item.itemId, _item.amount, "");
     }
 }

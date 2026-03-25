@@ -17,15 +17,15 @@ import {HashFitCore} from "./HashFit.sol";
 
 contract HashFitAdmin {
     /// @dev Total regular drops deployed by admin so far
-    uint16 totalDropsDeployed;
+    uint16 public totalDropsDeployed;
     /// @dev Total exclusive drops deployed by admin so far
-    uint16 totalExclusivesDeployed;
-    /// @dev Factory controlled by admin contract
-    HashFitFactory public immutable FACTORY;
+    uint16 public totalExclusivesDeployed;
+    /// @dev factory controlled by admin contract
+    HashFitFactory public immutable factory;
 
     constructor(HashFitTypes.FactorySetup memory setup) {
         // Create factory for spawning drops
-        FACTORY = new HashFitFactory(setup);
+        factory = new HashFitFactory(setup);
     }
 
     // Emitted when admin restocks a particular item within a drop gen
@@ -39,7 +39,7 @@ contract HashFitAdmin {
     // Emitted when a new gen drop is deployed
     event Command__DeployHashFitDrop();
     // Emitted when a new exclusive drop is deployed.
-    event Command__DeoloyExclusiveDrop();
+    event Command__DeployExclusiveDrop();
 
     error InvalidKeyType();
 
@@ -48,7 +48,7 @@ contract HashFitAdmin {
     /// @param itemId is the identifier for the item within the drop gen
     /// @param restockAmount is the amount of that item to be restocked
     function restock(uint64 gen, uint8 itemId, uint64 restockAmount) external {
-        HashFitCore drop = HashFitCore(FACTORY.drop(gen));
+        HashFitCore drop = HashFitCore(factory.drop(gen));
         drop.restock(itemId, restockAmount);
         emit Command__RestockItem(gen, itemId, restockAmount);
     }
@@ -58,16 +58,9 @@ contract HashFitAdmin {
     /// @param itemId is the unique identifier of the item within the drop gen
     /// @param discountBps is the percentage discount to be applied to the item (100bps = 1%)
     function setDiscount(uint64 gen, uint8 itemId, uint64 discountBps) external {
-        HashFitCore drop = HashFitCore(FACTORY.drop(gen));
+        HashFitCore drop = HashFitCore(factory.drop(gen));
         drop.setDiscount(itemId, discountBps);
         emit Command__SetDiscount(gen, itemId, discountBps);
-    }
-
-    /// @dev Admin function to set new burner address for keys
-    /// @param _newBurner is the new address which keys would be sent to for incilneration
-    function setKeyBurner(address _newBurner) external {
-        FACTORY.setKeyBurner(_newBurner);
-        emit Command__SetKeyBurner(_newBurner);
     }
 
     /// @dev Admin function to distribute mythic and epic keys]
@@ -77,18 +70,18 @@ contract HashFitAdmin {
     /// - Epic
     function distributeKeys(HashFitTypes.Receiver[] memory _receivers, HashFitTypes.KeyTier tier) external {
         // reject invalid key types
-        if (tier == HashFitTypes.KeyTier.LEGENDARY) {
-            HashFitMythic mythic = FACTORY.mythic();
+        if (tier == HashFitTypes.KeyTier.MYTHIC) {
+            HashFitMythic mythic = factory.mythic();
             mythic.distributeKeys(_receivers);
         }
         // distribute mythics
-        if (tier == HashFitTypes.KeyTier.MYTHIC) {
-            HashFitMythic mythic = FACTORY.mythic();
-            mythic.distributeKeys(_receivers);
+        if (tier == HashFitTypes.KeyTier.LEGENDARY) {
+            HashFitLegendary legendary = factory.legendary();
+            legendary.distributeKeys(_receivers);
         }
         // distribute epics
         else if (tier == HashFitTypes.KeyTier.EPIC) {
-            HashFitEpic epic = FACTORY.epic();
+            HashFitEpic epic = factory.epic();
             epic.distributeKeys(_receivers);
         }
         emit Command__DistributeKeys(tier);
@@ -96,16 +89,18 @@ contract HashFitAdmin {
 
     /// @dev Admin function to deploy a new drop from factory
     function deployHashFitDrop(HashFitTypes.HashFitDrop memory setup) external {
-        FACTORY.deployHashFitDrop(setup);
+        factory.deployHashFitDrop(setup);
+        totalDropsDeployed += 1;
         emit Command__DeployHashFitDrop();
     }
 
     /// @dev Admin function to deploy a new exclusive drop from factory
     function deployExclusiveDrop(bytes32 merkleRoot, HashFitTypes.HashFitDrop memory setup) external {
-        FACTORY.deployHashFitExclusive(merkleRoot, setup);
-        emit Command__DeoloyExclusiveDrop();
+        factory.deployHashFitExclusive(merkleRoot, setup);
+        totalExclusivesDeployed += 1;
+        emit Command__DeployExclusiveDrop();
     }
 
     /// @dev prevents further deployments of drops
-    function haltDeployments() external {}
+    // function haltDeployments() external {}
 }

@@ -39,8 +39,6 @@ import {IHashFitKey} from "./interfaces/IHashFitKey.sol";
 abstract contract KeyScaffold is ERC721A, IHashFitKey {
     // How many generations key is valid for
     uint8 internal immutable KEY_VALIDITY;
-    // Flag to check whether key for this gen has been distributed
-    bool internal distributed;
     // Factory address
     address internal immutable ADMIN;
     // Generation in which key was created
@@ -80,17 +78,10 @@ abstract contract KeyScaffold is ERC721A, IHashFitKey {
 
     /// @dev admin gated function used for manual key distribution.
     function distributeKeys(HashFitTypes.Receiver[] memory receivers) external onlyAdmin {
-        // Check whether key for this gen has been distributed
-        if (distributed) {
-            revert KeyDistributed(GENERATION);
-        }
         for (uint256 i; i < receivers.length; i++) {
             _mint(receivers[i].receiverAddress, receivers[i].amount);
             emit DistributeKeys(receivers[i].receiverAddress, receivers[i].amount);
         }
-
-        // Flag key as distributed and prevent newer ditributions
-        distributed = true;
     }
 
     /// @dev The time frame for which key usage is valid.
@@ -153,6 +144,7 @@ contract HashFitMythic is KeyScaffold {
 ///        - Expires if not used within the time frame for which its usage is valid
 contract HashFitLegendary is KeyScaffold {
     bytes32 internal constant TIER = keccak256("LEGENDARY");
+
     constructor(string memory _uri, HashFitTypes.KeyDetail memory _keyDetail, address _admin)
         KeyScaffold(
             HashFitTypes.Metadata({name: "HashFit Legendary Key", symbol: "LEGENDARY", uri: _uri}), _keyDetail, _admin
@@ -166,6 +158,7 @@ contract HashFitLegendary is KeyScaffold {
 
 contract HashFitEpic is KeyScaffold {
     bytes32 internal constant TIER = keccak256("EPIC");
+
     constructor(string memory _uri, HashFitTypes.KeyDetail memory _keyDetail, address _admin)
         KeyScaffold(HashFitTypes.Metadata({name: "HashFit Epic Key", symbol: "EPIC", uri: _uri}), _keyDetail, _admin)
     {}
@@ -174,4 +167,3 @@ contract HashFitEpic is KeyScaffold {
         return TIER;
     }
 }
-

@@ -19,12 +19,6 @@ interface IHashFitKey {
     function distributeKeys(HashFitTypes.Receiver[] memory receivers) external;
 
     /**
-     * Returns the drop generation for which key belongs.
-     * Mythic and epic keys return 0
-     */
-    function generation() external returns (uint256);
-
-    /**
      * Returns the number of gens for which key can be used before expiry
      * Mythic keys return 0 as they do not expire
      */

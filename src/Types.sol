@@ -46,6 +46,8 @@ abstract contract HashFitTypes {
         Key epic;
         // one time detail for mythic key contract to be deployed by factory
         Key mythic;
+        // one time detail for legendary key to be deployed by factory
+        Key legendary;
     }
 
     // Per item details
@@ -69,19 +71,20 @@ abstract contract HashFitTypes {
     // Purchasing an item within this phase would allow buyer wallet to be collected and considered
     // for random HashFit keys distribution offchain
     struct HashFitDrop {
-        // How many individual items are in the drop
-        uint64 totalSupply;
         // Drop generation
         uint64 generation;
         // When the drop sale begins
         uint256 saleStartTime;
         // Sale timeframe within which buyers can be considered for key raffle
         uint256 cypheringPhaseDuration;
+        // contract uri
+        string uri;
         // Unique items in the drop. see {Item} struct.
         Item[] items;
+        // Allowed payment tokens token
+        address token;
     }
 
-    
     /// @dev Used to collect info on what key a user would like to use when they attempt
     /// To make purchase with a key
     struct KeyInfo {

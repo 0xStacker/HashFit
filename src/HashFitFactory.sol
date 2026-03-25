@@ -14,27 +14,42 @@ import {KeyBurner} from "./KeyBurner.sol";
  * HashFit factory is responsible for the deployment of new gen of HashFit drops.
  */
 contract HashFitFactory is IHashFitFactory {
+    /// Next generation of drop waiting to be deployed
+    uint64 internal nextGen;
+    uint64 internal nextExclusive;
+
     /// @dev The key burner contract
     address public keyBurner;
+
     /// @dev Non changing mythic key contract deployed with the factory
     HashFitMythic internal immutable MYTHIC;
+
     /// @dev Non changing epic key contract deployed with the factory
     HashFitEpic internal immutable EPIC;
+
     /// @dev Non changing epic key contract deployed with the factory
     HashFitLegendary internal immutable LEGENDARY;
+
     /// @dev Admin who controls the entire factory
     /// @notice All administrative function accross all HashFit contract managed by ADMIN
     /// Check {HashFitAdmin} to see all administrative functions
     address private immutable ADMIN;
-    /// Next generation of drop waiting to be deployed
-    uint256 internal nextGen;
-    uint256 internal nextExclusive;
+
     /// @dev All deployed drops mapped by gen
     mapping(uint256 => HashFitCore) public drop;
+
+    /// @dev getter variable for all deployed drops
+    HashFitCore[] public getDrops;
+
+    /// @dev getter variable for all deployed exclusives
+    HashFitExclusive[] public getExclusive;
+
     /// @dev All deployed exclusive drops mapped by id
     mapping(uint256 => HashFitExclusive) exclusive;
 
+    /// @dev Thrown when a non-admin address attempts to call administrative functions
     error UnauthorizedAccess();
+
     // Emitted when a drop is created
     event CreateDrop(address indexed _drop, uint256 gen);
 
@@ -55,17 +70,14 @@ contract HashFitFactory is IHashFitFactory {
         _;
     }
 
-    /// @dev Admin sets new key burner contract
-    function setKeyBurner(address _newBurner) external onlyAdmin {
-        keyBurner = _newBurner;
-    }
-
     /// @dev Admin creates new drop
     /// @param _setup contains the required data to initialize the drop. see {HashFitTypes.HashFitDrop}
 
     function deployHashFitDrop(HashFitTypes.HashFitDrop memory _setup) external onlyAdmin {
+        _setup.generation = nextGen;
         HashFitCore nextGenDrop = new HashFitCore(_setup, ADMIN);
         drop[nextGen] = nextGenDrop;
+        getDrops.push(nextGenDrop);
         nextGen++;
     }
 
@@ -74,6 +86,7 @@ contract HashFitFactory is IHashFitFactory {
     function deployHashFitExclusive(bytes32 merkleRoot, HashFitTypes.HashFitDrop memory _setup) external onlyAdmin {
         HashFitExclusive nextExclusiveDrop = new HashFitExclusive(merkleRoot, _setup, ADMIN);
         exclusive[nextExclusive] = nextExclusiveDrop;
+        getExclusive.push(nextExclusiveDrop);
         nextExclusive++;
     }
 
@@ -88,6 +101,16 @@ contract HashFitFactory is IHashFitFactory {
     /// @dev The first drop deployed by factory
     function genesis() external view returns (HashFitCore) {
         return drop[0];
+    }
+
+    /// @dev getter for all exclusive drops deployed by this factory
+    function exclusiveDrops() external view returns (HashFitExclusive[] memory) {
+        return getExclusive;
+    }
+
+    /// @dev getter for all gen drops deployed by this factory.
+    function genDrops() external view returns (HashFitCore[] memory) {
+        return getDrops;
     }
 
     /// @dev the last drop deployed by factory

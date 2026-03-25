@@ -5,9 +5,12 @@ import {IHashFitErrors} from "./interfaces/IHashFitErrors.sol";
 import {ERC1155} from "@openzeppelin/token/ERC1155/ERC1155.sol";
 import {IHashFitKey} from "./interfaces/IHashFitKey.sol";
 import {IERC721A} from "@ERC721A/IERC721A.sol";
+import {IERC20} from "@openzeppelin/interfaces/IERC20.sol";
 import {IHashFitFactory} from "./interfaces/IHashFitFactory.sol";
 import {HashFitLegendary, HashFitMythic} from "./HashFitKeys.sol";
 import {ReentrancyGuard} from "@openzeppelin/utils/ReentrancyGuard.sol";
+import {SafeERC20} from "@openzeppelin/token/ERC20/utils/SafeERC20.sol";
+import {console} from "forge-std/Test.sol";
 
 /// @title HashFit Identity SBT
 /// @author Ibrahim 🐸
@@ -17,46 +20,62 @@ import {ReentrancyGuard} from "@openzeppelin/utils/ReentrancyGuard.sol";
  *
  */
 contract HashFitCore is ERC1155, IHashFitErrors, ReentrancyGuard {
+    using SafeERC20 for IERC20;
+
+    // USDT
+    IERC20 immutable USDT;
     // BPS value for % calculations
     uint16 internal constant BPS = 10_000;
-    // HashFit Factory
+
+    // HashFit Admin contorls all administrative functions
     address internal immutable ADMIN;
 
     // Total unit of items in the drop
     uint64 public totalSupply;
+
     // Current Drop Generation
     uint64 public immutable GENERATION;
+
     // Time when drop sale begins
     uint256 immutable SALE_START_TIME;
+
     // How long the cyphering stage of drop sale would last
     uint256 immutable CYPHERING_PHASE_DURATION;
+
     // SBT uri
     string public contractUri;
+
+    //
+    uint256[] itemIds;
     // Unique HashFit items
     HashFitTypes.Item[] internal hashFitItems;
+
     // Unique drop items
-    mapping(uint256 => HashFitTypes.Item) dropItems;
+    mapping(uint256 => HashFitTypes.Item) public dropItems;
+
     // Tracks the suppply of each unique item within the drop
     mapping(uint256 => uint256) public currentSupply;
+
     // Number of items that has been sold in the drop
     uint256 public totalSoldItems;
 
     /// @dev Initialize drop with required data
     constructor(HashFitTypes.HashFitDrop memory setup, address _admin) ERC1155(setup.uri) ReentrancyGuard() {
-        // Configure drop
-        totalSupply = setup.totalSupply;
         GENERATION = setup.generation;
         SALE_START_TIME = setup.saleStartTime;
         CYPHERING_PHASE_DURATION = setup.cypheringPhaseDuration;
         ADMIN = _admin;
+        USDT = IERC20(setup.token);
         // Add unique drop items to record
         for (uint256 i; i < setup.items.length; i++) {
             dropItems[i] = setup.items[i];
-            hashFitItems.push(setup.items[i]);
+            itemIds.push(i);
+            totalSupply += setup.items[i].maxSupply;
         }
+        _updateItems();
     }
 
-    // Enforce factory priviledges
+    // Enforce admin priviledges
     modifier onlyAdmin() {
         if (msg.sender != ADMIN) {
             revert UnauthorizedAccess();
@@ -81,30 +100,40 @@ contract HashFitCore is ERC1155, IHashFitErrors, ReentrancyGuard {
             revert SaleNotStarted();
         }
 
+        if (_items.length == 0) {
+            revert NotEnoughItems();
+        }
+
         uint256 totalCost;
-        // Handle sale of all items requested.
+        // Destructure bag and handle sale of all items present.
         for (uint8 i; i < _items.length; i++) {
             HashFitTypes.SaleItem memory currentItem = _items[i];
 
-            if (currentSupply[currentItem.itemId] + currentItem.amount > dropItems[currentItem.itemId].maxSupply) {
+            if (!_canPurchase(currentItem)) {
                 revert CannotPurchaseItem(currentItem.itemId, currentItem.amount);
             }
             uint64 discount = dropItems[currentItem.itemId].discount;
             uint256 price = dropItems[currentItem.itemId].price;
             uint256 amount = currentItem.amount;
-            totalCost += discount > 0 ? (price - ((price * amount * discount) / BPS)) : price * amount;
-            if (msg.value < totalCost) {
+            totalCost += discount > 0 ? ((price * amount) - ((price * amount * discount) / BPS)) : price * amount;
+            if (USDT.balanceOf(tx.origin) < totalCost) {
                 revert InsufficientFund();
             }
 
             currentSupply[currentItem.itemId] += currentItem.amount;
-
-            if (totalSoldItems + currentItem.amount > totalSupply) {
-                revert NotEnoughItems();
-            }
             totalSoldItems += currentItem.amount;
             emit PurchaseAndClaim(currentItem.itemId, currentItem.amount, false);
-            _mint(msg.sender, currentItem.amount, currentItem.itemId, "");
+            _mint(tx.origin, currentItem.itemId, currentItem.amount, "");
+        }
+
+        USDT.safeTransferFrom(tx.origin, ADMIN, totalCost);
+    }
+
+    function _updateItems() internal {
+        delete hashFitItems;
+        for (uint8 i; i < itemIds.length; i++) {
+            HashFitTypes.Item storage item = dropItems[itemIds[i]];
+            hashFitItems.push(item);
         }
     }
 
@@ -123,6 +152,7 @@ contract HashFitCore is ERC1155, IHashFitErrors, ReentrancyGuard {
     /// NB: Restock can only be done through factory by an authorized admin
     function restock(uint8 itemId, uint64 restockAmount) external onlyAdmin {
         dropItems[itemId].maxSupply += restockAmount;
+        _updateItems();
         totalSupply += restockAmount;
     }
 
@@ -132,6 +162,7 @@ contract HashFitCore is ERC1155, IHashFitErrors, ReentrancyGuard {
     /// NB: Discount can only be set through factory by an authorized admin
     function setDiscount(uint8 itemId, uint64 discountBps) external onlyAdmin {
         dropItems[itemId].discount = discountBps;
+        _updateItems();
     }
 
     /// @dev fetches the URI for an item
