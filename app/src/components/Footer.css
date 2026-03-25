@@ -1,0 +1,9 @@
+.footer-section {
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+  border-top: 1px solid rgb(182, 182, 182);
+  font-size: 15px;
+  color: rgb(102, 102, 102);
+  margin: 20px;
+}

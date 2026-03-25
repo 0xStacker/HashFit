@@ -1,0 +1,56 @@
+.project-section {
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+}
+
+.project-description {
+  font-size: 20px;
+  letter-spacing: 1.5px;
+  font-weight: 600;
+  line-height: 2;
+  margin: 10px;
+}
+
+.mock-section {
+  display: flex;
+  flex-direction: column;
+  max-width: 100%;
+  align-self: center;
+  margin: 25px;
+  justify-content: center;
+}
+
+.mock {
+  max-width: 70vw;
+  border-radius: 6px;
+  flex-grow: 1;
+}
+
+h2 {
+  letter-spacing: 3px;
+  font-weight: 700;
+  font-size: 40px;
+  margin: 10px;
+}
+
+.shop-button {
+  position: relative;
+  bottom: 50px;
+  left: 15px;
+  width: fit-content;
+  padding: 10px 10px;
+  color: white;
+  border-radius: 20px;
+  background-color: #c73044;
+}
+
+.shop-cta {
+  position: relative;
+  bottom: 200px;
+  color: white;
+  font-size: 30px;
+  letter-spacing: 1.5px;
+  font-weight: 700;
+  left: 15px;
+}
