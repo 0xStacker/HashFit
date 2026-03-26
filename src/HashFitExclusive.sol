@@ -19,16 +19,23 @@ contract HashFitExclusive is HashFitCore {
     using MerkleProof for bytes32[];
     // Merkle root for addresses allowed to purchase an item from the drop
     bytes32 immutable ROOT;
+
+    address immutable KEY_ROUTER;
     // Factory contract
     IHashFitFactory internal immutable FACTORY;
     // Non changing mythic key contract
     HashFitMythic internal immutable mythic;
 
     // Initialize contract with necessary data
-    constructor(bytes32 merkleRoot, HashFitTypes.HashFitDrop memory setup, address _admin) HashFitCore(setup, _admin) {
+    constructor(
+        bytes32 merkleRoot,
+        HashFitTypes.HashFitDrop memory setup,
+        address _admin
+    ) HashFitCore(setup, _admin) {
         ROOT = merkleRoot;
         FACTORY = IHashFitFactory(msg.sender);
         mythic = FACTORY.mythic();
+        KEY_ROUTER = setup.routers.keyRouter;
     }
 
     // Thrown when a non whitelisted user attempts a purchase
@@ -42,18 +49,27 @@ contract HashFitExclusive is HashFitCore {
     //     _;
     // }
 
-    /// @inheritdoc HashFitCore
-    /// @param proof is the merkle proof used to validate user
-    function purchaseAndClaim(HashFitTypes.SaleItem[] memory _items, bytes32[] memory proof)
-        external
-        payable
-        override /*onlyWhitelist (proof) */
-        nonReentrant
-    {
-        _purchaseAndClaim(_items);
+    modifier onlyKeyRouter() {
+        if (msg.sender != KEY_ROUTER) {
+            revert UnauthorizedAccess();
+        }
+        _;
     }
 
-    function purchaseWithKey(HashFitTypes.SaleItem memory _item, uint256[] memory keyIds) external nonReentrant {
+    /// @inheritdoc HashFitCore
+    function purchaseAndClaim(
+        HashFitTypes.SaleItem[] memory _items,
+        address caller,
+        bytes32[] memory /*proof onlyWhitelist (proof) */
+    ) external payable override nonReentrant onlyPaidRouter {
+        _purchaseAndClaim(_items, caller);
+    }
+
+    function purchaseWithKey(
+        HashFitTypes.SaleItem memory _item,
+        uint256[] memory keyIds,
+        address caller
+    ) external nonReentrant onlyKeyRouter {
         if (keyIds.length < dropItems[_item.itemId].priceInKeys) {
             revert KeyMismatch();
         }
@@ -63,27 +79,37 @@ contract HashFitExclusive is HashFitCore {
             revert SaleNotStarted();
         }
 
-        if (currentSupply[_item.itemId] + _item.amount > dropItems[_item.itemId].maxSupply) {
+        if (
+            currentSupply[_item.itemId] + _item.amount >
+            dropItems[_item.itemId].maxSupply
+        ) {
             revert CannotPurchaseItem(_item.itemId, _item.amount);
         }
 
         for (uint256 i; i < keyIds.length; i++) {
             uint256 keyId = keyIds[i];
 
-            if (tx.origin != IERC721A(mythic).ownerOf(keyId)) {
+            if (caller != IERC721A(mythic).ownerOf(keyId)) {
                 revert UnauthorizedKeyUsage(keyId);
             }
             // Send key to burner and mint identity SBT
             bytes memory burnInstruction = abi.encode(address(mythic), keyId);
-            try IERC721A(mythic).safeTransferFrom(tx.origin, FACTORY.keyBurner(), keyId, burnInstruction) {
-                emit RedeemKey(tx.origin, keyId);
+            try
+                IERC721A(mythic).safeTransferFrom(
+                    caller,
+                    FACTORY.keyBurner(),
+                    keyId,
+                    burnInstruction
+                )
+            {
+                emit RedeemKey(caller, keyId);
             } catch {
                 revert UnableToTransferKey();
             }
         }
         currentSupply[_item.itemId] += _item.amount;
         totalSoldItems += _item.amount;
-        emit PurchaseAndClaim(_item.itemId, _item.amount, true);
-        _mint(tx.origin, _item.itemId, _item.amount, "");
+        emit PurchaseAndClaim(caller, _item.itemId, _item.amount, true);
+        _mint(caller, _item.itemId, _item.amount, "");
     }
 }

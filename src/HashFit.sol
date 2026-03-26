@@ -10,7 +10,6 @@ import {IHashFitFactory} from "./interfaces/IHashFitFactory.sol";
 import {HashFitLegendary, HashFitMythic} from "./HashFitKeys.sol";
 import {ReentrancyGuard} from "@openzeppelin/utils/ReentrancyGuard.sol";
 import {SafeERC20} from "@openzeppelin/token/ERC20/utils/SafeERC20.sol";
-import {console} from "forge-std/Test.sol";
 
 /// @title HashFit Identity SBT
 /// @author Ibrahim 🐸
@@ -50,6 +49,10 @@ contract HashFitCore is ERC1155, IHashFitErrors, ReentrancyGuard {
     // Unique HashFit items
     HashFitTypes.Item[] internal hashFitItems;
 
+    /// @dev All purchase related calls can only be made through routers.
+    /// This allows purchases of multiple items across multiple gens and exclusives in one atomic transaction.
+    address immutable PAID_ROUTER;
+
     // Unique drop items
     mapping(uint256 => HashFitTypes.Item) public dropItems;
 
@@ -60,12 +63,17 @@ contract HashFitCore is ERC1155, IHashFitErrors, ReentrancyGuard {
     uint256 public totalSoldItems;
 
     /// @dev Initialize drop with required data
-    constructor(HashFitTypes.HashFitDrop memory setup, address _admin) ERC1155(setup.uri) ReentrancyGuard() {
+    constructor(
+        HashFitTypes.HashFitDrop memory setup,
+        address _admin
+    ) ERC1155(setup.uri) ReentrancyGuard() {
         GENERATION = setup.generation;
+        contractUri = setup.uri;
         SALE_START_TIME = setup.saleStartTime;
         CYPHERING_PHASE_DURATION = setup.cypheringPhaseDuration;
         ADMIN = _admin;
         USDT = IERC20(setup.token);
+        PAID_ROUTER = setup.routers.paidRouter;
         // Add unique drop items to record
         for (uint256 i; i < setup.items.length; i++) {
             dropItems[i] = setup.items[i];
@@ -83,19 +91,28 @@ contract HashFitCore is ERC1155, IHashFitErrors, ReentrancyGuard {
         _;
     }
 
+    modifier onlyPaidRouter() {
+        if (msg.sender != PAID_ROUTER) {
+            revert UnauthorizedAccess();
+        }
+        _;
+    }
+
     /// @dev Purchase an item from drop and claim identity SBT
     /// @param _items is the list of all items to be purchased
-    function purchaseAndClaim(HashFitTypes.SaleItem[] memory _items, bytes32[] memory)
-        external
-        payable
-        virtual
-        nonReentrant
-    {
-        _purchaseAndClaim(_items);
+    function purchaseAndClaim(
+        HashFitTypes.SaleItem[] memory _items,
+        address caller,
+        bytes32[] memory
+    ) external payable virtual nonReentrant onlyPaidRouter {
+        _purchaseAndClaim(_items, caller);
     }
 
     /// @dev Purchase n units of m items with no key involvements
-    function _purchaseAndClaim(HashFitTypes.SaleItem[] memory _items) internal {
+    function _purchaseAndClaim(
+        HashFitTypes.SaleItem[] memory _items,
+        address caller
+    ) internal {
         if (block.timestamp < SALE_START_TIME) {
             revert SaleNotStarted();
         }
@@ -104,29 +121,40 @@ contract HashFitCore is ERC1155, IHashFitErrors, ReentrancyGuard {
             revert NotEnoughItems();
         }
 
-        uint256 totalCost;
+        uint256 totalCost = 0;
         // Destructure bag and handle sale of all items present.
         for (uint8 i; i < _items.length; i++) {
             HashFitTypes.SaleItem memory currentItem = _items[i];
 
             if (!_canPurchase(currentItem)) {
-                revert CannotPurchaseItem(currentItem.itemId, currentItem.amount);
+                revert CannotPurchaseItem(
+                    currentItem.itemId,
+                    currentItem.amount
+                );
             }
             uint64 discount = dropItems[currentItem.itemId].discount;
             uint256 price = dropItems[currentItem.itemId].price;
             uint256 amount = currentItem.amount;
-            totalCost += discount > 0 ? ((price * amount) - ((price * amount * discount) / BPS)) : price * amount;
-            if (USDT.balanceOf(tx.origin) < totalCost) {
+            totalCost += discount > 0
+                ? ((price * amount) - ((price * amount * discount) / BPS))
+                : price * amount;
+            if (USDT.balanceOf(caller) < totalCost) {
                 revert InsufficientFund();
             }
 
             currentSupply[currentItem.itemId] += currentItem.amount;
             totalSoldItems += currentItem.amount;
-            emit PurchaseAndClaim(currentItem.itemId, currentItem.amount, false);
-            _mint(tx.origin, currentItem.itemId, currentItem.amount, "");
+            emit PurchaseAndClaim(
+                caller,
+                currentItem.itemId,
+                currentItem.amount,
+                false
+            );
+
+            _mint(caller, currentItem.itemId, currentItem.amount, "");
         }
 
-        USDT.safeTransferFrom(tx.origin, ADMIN, totalCost);
+        USDT.safeTransferFrom(caller, ADMIN, totalCost);
     }
 
     function _updateItems() internal {
@@ -138,8 +166,13 @@ contract HashFitCore is ERC1155, IHashFitErrors, ReentrancyGuard {
     }
 
     /// @dev Checks whether an item can be purchased without exceeding its current max supply
-    function _canPurchase(HashFitTypes.SaleItem memory item) internal view returns (bool) {
-        if (currentSupply[item.itemId] + item.amount > dropItems[item.itemId].maxSupply) {
+    function _canPurchase(
+        HashFitTypes.SaleItem memory item
+    ) internal view returns (bool) {
+        if (
+            currentSupply[item.itemId] + item.amount >
+            dropItems[item.itemId].maxSupply
+        ) {
             return false;
         }
         return true;
@@ -199,11 +232,7 @@ contract HashFitCore is ERC1155, IHashFitErrors, ReentrancyGuard {
         uint256,
         /*value*/
         bytes memory /*data*/
-    )
-        public
-        pure
-        override
-    {
+    ) public pure override {
         revert NonTransferrable();
     }
 
@@ -217,11 +246,7 @@ contract HashFitCore is ERC1155, IHashFitErrors, ReentrancyGuard {
         uint256[] memory,
         /*values*/
         bytes memory /*data*/
-    )
-        public
-        pure
-        override
-    {
+    ) public pure override {
         revert NonTransferrable();
     }
 
@@ -229,11 +254,7 @@ contract HashFitCore is ERC1155, IHashFitErrors, ReentrancyGuard {
         address,
         /*operator*/
         bool /*approved*/
-    )
-        public
-        pure
-        override
-    {
+    ) public pure override {
         revert NonTransferrable();
     }
 }
