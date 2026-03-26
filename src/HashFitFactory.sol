@@ -55,21 +55,9 @@ contract HashFitFactory is IHashFitFactory {
 
     /// @dev Initialize factory as necessary
     constructor(HashFitTypes.FactorySetup memory setup) {
-        EPIC = new HashFitEpic(
-            setup.epic.uri,
-            setup.epic.keyDetail,
-            msg.sender
-        );
-        MYTHIC = new HashFitMythic(
-            setup.mythic.uri,
-            setup.mythic.keyDetail,
-            msg.sender
-        );
-        LEGENDARY = new HashFitLegendary(
-            setup.legendary.uri,
-            setup.legendary.keyDetail,
-            msg.sender
-        );
+        EPIC = new HashFitEpic(setup.epic.uri, setup.epic.keyDetail, msg.sender);
+        MYTHIC = new HashFitMythic(setup.mythic.uri, setup.mythic.keyDetail, msg.sender);
+        LEGENDARY = new HashFitLegendary(setup.legendary.uri, setup.legendary.keyDetail, msg.sender);
         keyBurner = address(new KeyBurner());
         ADMIN = msg.sender;
     }
@@ -85,9 +73,7 @@ contract HashFitFactory is IHashFitFactory {
     /// @dev Admin creates new drop
     /// @param _setup contains the required data to initialize the drop. see {HashFitTypes.HashFitDrop}
 
-    function deployHashFitDrop(
-        HashFitTypes.HashFitDrop memory _setup
-    ) external onlyAdmin {
+    function deployHashFitDrop(HashFitTypes.HashFitDrop memory _setup) external onlyAdmin {
         _setup.generation = nextGen;
         HashFitCore nextGenDrop = new HashFitCore(_setup, ADMIN);
         drop[nextGen] = nextGenDrop;
@@ -97,15 +83,8 @@ contract HashFitFactory is IHashFitFactory {
 
     /// @dev Admin creates new exclusive drop
     /// @param _setup contains the required data to initialize the drop. see {HashFitTypes.HashFitDrop}
-    function deployHashFitExclusive(
-        bytes32 merkleRoot,
-        HashFitTypes.HashFitDrop memory _setup
-    ) external onlyAdmin {
-        HashFitExclusive nextExclusiveDrop = new HashFitExclusive(
-            merkleRoot,
-            _setup,
-            ADMIN
-        );
+    function deployHashFitExclusive(bytes32 merkleRoot, HashFitTypes.HashFitDrop memory _setup) external onlyAdmin {
+        HashFitExclusive nextExclusiveDrop = new HashFitExclusive(merkleRoot, _setup, ADMIN);
         exclusive[nextExclusive] = nextExclusiveDrop;
         getExclusive.push(nextExclusiveDrop);
         nextExclusive++;
@@ -125,11 +104,7 @@ contract HashFitFactory is IHashFitFactory {
     }
 
     /// @dev getter for all exclusive drops deployed by this factory
-    function exclusiveDrops()
-        external
-        view
-        returns (HashFitExclusive[] memory)
-    {
+    function exclusiveDrops() external view returns (HashFitExclusive[] memory) {
         return getExclusive;
     }
 

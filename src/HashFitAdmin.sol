@@ -24,20 +24,15 @@ contract HashFitAdmin is AccessControlDefaultAdminRules {
     /// @dev factory controlled by admin contract
     HashFitFactory public immutable factory;
 
-    constructor(
-        HashFitTypes.FactorySetup memory setup,
-        address defaultAdmin
-    ) AccessControlDefaultAdminRules(3 days, defaultAdmin) {
+    constructor(HashFitTypes.FactorySetup memory setup, address defaultAdmin)
+        AccessControlDefaultAdminRules(3 days, defaultAdmin)
+    {
         // Create factory for spawning drops
         factory = new HashFitFactory(setup);
     }
 
     // Emitted when admin restocks a particular item within a drop gen
-    event Command__RestockItem(
-        uint64 _gen,
-        uint8 _itemId,
-        uint256 _restockAmount
-    );
+    event Command__RestockItem(uint64 _gen, uint8 _itemId, uint256 _restockAmount);
     // Emitted when admin applies discount to a certain item within a drop gen
     event Command__SetDiscount(uint64 _gen, uint8 itemId, uint64 discount);
     // Emitted when admin changes the contracts that burns redeemed keys
@@ -55,11 +50,7 @@ contract HashFitAdmin is AccessControlDefaultAdminRules {
     /// @param gen is the drop generation for which the item was created
     /// @param itemId is the identifier for the item within the drop gen
     /// @param restockAmount is the amount of that item to be restocked
-    function restock(
-        uint64 gen,
-        uint8 itemId,
-        uint64 restockAmount
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function restock(uint64 gen, uint8 itemId, uint64 restockAmount) external onlyRole(DEFAULT_ADMIN_ROLE) {
         HashFitCore drop = HashFitCore(factory.drop(gen));
         drop.restock(itemId, restockAmount);
         emit Command__RestockItem(gen, itemId, restockAmount);
@@ -69,11 +60,7 @@ contract HashFitAdmin is AccessControlDefaultAdminRules {
     /// @param gen is the drop generation which the item belongs
     /// @param itemId is the unique identifier of the item within the drop gen
     /// @param discountBps is the percentage discount to be applied to the item (100bps = 1%)
-    function setDiscount(
-        uint64 gen,
-        uint8 itemId,
-        uint64 discountBps
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function setDiscount(uint64 gen, uint8 itemId, uint64 discountBps) external onlyRole(DEFAULT_ADMIN_ROLE) {
         HashFitCore drop = HashFitCore(factory.drop(gen));
         drop.setDiscount(itemId, discountBps);
         emit Command__SetDiscount(gen, itemId, discountBps);
@@ -84,10 +71,10 @@ contract HashFitAdmin is AccessControlDefaultAdminRules {
     /// @param tier is the key tier to distribute
     /// - Mythic
     /// - Epic
-    function distributeKeys(
-        HashFitTypes.Receiver[] memory _receivers,
-        HashFitTypes.KeyTier tier
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function distributeKeys(HashFitTypes.Receiver[] memory _receivers, HashFitTypes.KeyTier tier)
+        external
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
         // reject invalid key types
         if (tier == HashFitTypes.KeyTier.MYTHIC) {
             HashFitMythic mythic = factory.mythic();
@@ -107,19 +94,17 @@ contract HashFitAdmin is AccessControlDefaultAdminRules {
     }
 
     /// @dev Admin function to deploy a new drop from factory
-    function deployHashFitDrop(
-        HashFitTypes.HashFitDrop memory setup
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function deployHashFitDrop(HashFitTypes.HashFitDrop memory setup) external onlyRole(DEFAULT_ADMIN_ROLE) {
         factory.deployHashFitDrop(setup);
         totalDropsDeployed += 1;
         emit Command__DeployHashFitDrop();
     }
 
     /// @dev Admin function to deploy a new exclusive drop from factory
-    function deployExclusiveDrop(
-        bytes32 merkleRoot,
-        HashFitTypes.HashFitDrop memory setup
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function deployExclusiveDrop(bytes32 merkleRoot, HashFitTypes.HashFitDrop memory setup)
+        external
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
         factory.deployHashFitExclusive(merkleRoot, setup);
         totalExclusivesDeployed += 1;
         emit Command__DeployExclusiveDrop();

@@ -27,11 +27,7 @@ contract HashFitExclusive is HashFitCore {
     HashFitMythic internal immutable mythic;
 
     // Initialize contract with necessary data
-    constructor(
-        bytes32 merkleRoot,
-        HashFitTypes.HashFitDrop memory setup,
-        address _admin
-    ) HashFitCore(setup, _admin) {
+    constructor(bytes32 merkleRoot, HashFitTypes.HashFitDrop memory setup, address _admin) HashFitCore(setup, _admin) {
         ROOT = merkleRoot;
         FACTORY = IHashFitFactory(msg.sender);
         mythic = FACTORY.mythic();
@@ -61,15 +57,21 @@ contract HashFitExclusive is HashFitCore {
         HashFitTypes.SaleItem[] memory _items,
         address caller,
         bytes32[] memory /*proof onlyWhitelist (proof) */
-    ) external payable override nonReentrant onlyPaidRouter {
+    )
+        external
+        payable
+        override
+        nonReentrant
+        onlyPaidRouter
+    {
         _purchaseAndClaim(_items, caller);
     }
 
-    function purchaseWithKey(
-        HashFitTypes.SaleItem memory _item,
-        uint256[] memory keyIds,
-        address caller
-    ) external nonReentrant onlyKeyRouter {
+    function purchaseWithKey(HashFitTypes.SaleItem memory _item, uint256[] memory keyIds, address caller)
+        external
+        nonReentrant
+        onlyKeyRouter
+    {
         if (keyIds.length < dropItems[_item.itemId].priceInKeys) {
             revert KeyMismatch();
         }
@@ -79,10 +81,7 @@ contract HashFitExclusive is HashFitCore {
             revert SaleNotStarted();
         }
 
-        if (
-            currentSupply[_item.itemId] + _item.amount >
-            dropItems[_item.itemId].maxSupply
-        ) {
+        if (currentSupply[_item.itemId] + _item.amount > dropItems[_item.itemId].maxSupply) {
             revert CannotPurchaseItem(_item.itemId, _item.amount);
         }
 
@@ -94,14 +93,7 @@ contract HashFitExclusive is HashFitCore {
             }
             // Send key to burner and mint identity SBT
             bytes memory burnInstruction = abi.encode(address(mythic), keyId);
-            try
-                IERC721A(mythic).safeTransferFrom(
-                    caller,
-                    FACTORY.keyBurner(),
-                    keyId,
-                    burnInstruction
-                )
-            {
+            try IERC721A(mythic).safeTransferFrom(caller, FACTORY.keyBurner(), keyId, burnInstruction) {
                 emit RedeemKey(caller, keyId);
             } catch {
                 revert UnableToTransferKey();

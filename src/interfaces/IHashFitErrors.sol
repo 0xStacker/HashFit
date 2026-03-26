@@ -7,12 +7,7 @@ pragma solidity ^0.8.25;
 
 interface IHashFitErrors {
     // Emitted after a successful purchase of an item
-    event PurchaseAndClaim(
-        address indexed buyer,
-        uint256 item,
-        uint256 amount,
-        bool key
-    );
+    event PurchaseAndClaim(address indexed buyer, uint256 item, uint256 amount, bool key);
     // Emitted when a key is succesfully redeemed
     event RedeemKey(address redeemer, uint256 keyId);
     // Thrown when a purchase is attempted before drop sale begins
