@@ -17,7 +17,7 @@ contract KeyPurchaseRouter {
         }
         for (uint256 i; i < _items.length; i++) {
             HashFitExclusive drop = HashFitExclusive(_items[i].gen);
-            drop.purchaseWithKey(_items[i].item, _items[i].keyIds);
+            drop.purchaseWithKey(_items[i].item, _items[i].keyIds, msg.sender);
         }
     }
 }

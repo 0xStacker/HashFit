@@ -21,7 +21,8 @@ contract PaidPurchaseRouter {
                 revert("error");
             }
             HashFitCore drop = HashFitCore(_items[i].gen);
-            drop.purchaseAndClaim(_items[i].items, _items[i].proof);
+            // Pass down caller
+            drop.purchaseAndClaim(_items[i].items, msg.sender, _items[i].proof);
         }
     }
 }
