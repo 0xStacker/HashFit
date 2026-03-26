@@ -11,7 +11,11 @@ import {HashFitCore} from "../src/HashFit.sol";
 import {HashFitFactory} from "../src/HashFitFactory.sol";
 
 contract HashFitCoreTest is Test {
+    //
+    address defaultAdmin = address(12345);
+    // Admin contract
     HashFitAdmin admin;
+    // Mock usdt for purchase
     MockUSDT usdt;
     PaidPurchaseRouter router;
     KeyPurchaseRouter keyRouter;
@@ -50,7 +54,8 @@ contract HashFitCoreTest is Test {
                 epic: epic,
                 legendary: legendary,
                 mythic: mythic
-            })
+            }),
+            defaultAdmin
         );
 
         router = new PaidPurchaseRouter();
@@ -72,7 +77,7 @@ contract HashFitCoreTest is Test {
         );
     }
 
-    function testSetUp() public view {
+    function testLogSetUp() public view {
         console.log(address(admin));
         console.log(address(router));
         console.log(address(admin.factory()));
@@ -119,13 +124,19 @@ contract HashFitCoreTest is Test {
         items[1] = item1;
         items[2] = item2;
 
+        HashFitTypes.Routers memory routers = HashFitTypes.Routers({
+            paidRouter: address(router),
+            keyRouter: address(keyRouter)
+        });
+
         setup = HashFitTypes.HashFitDrop({
             generation: 0,
             saleStartTime: 0,
             cypheringPhaseDuration: 0,
             uri: "test/drop0",
             items: items,
-            token: address(usdt)
+            token: address(usdt),
+            routers: routers
         });
     }
 
@@ -136,7 +147,11 @@ contract HashFitCoreTest is Test {
         HashFitTypes.HashFitDrop memory setup = constructDrop(data);
         uint256 oldDropLength = admin.factory().genDrops().length;
         uint256 oldTotalDeployed = admin.totalDropsDeployed();
+        vm.expectRevert();
         admin.deployHashFitDrop(setup);
+        vm.startPrank(defaultAdmin);
+        admin.deployHashFitDrop(setup);
+        vm.stopPrank();
         uint256 newDropLength = admin.factory().genDrops().length;
         uint256 newTotalDeployed = admin.totalDropsDeployed();
         HashFitFactory factory = admin.factory();
@@ -158,6 +173,9 @@ contract HashFitCoreTest is Test {
         ItemData memory data = ItemData({maxSupply: 30, priceInKeys: 3});
         HashFitTypes.HashFitDrop memory setup = constructDrop(data);
         uint256 oldExclusiveLength = admin.factory().exclusiveDrops().length;
+        vm.expectRevert();
+        admin.deployExclusiveDrop(root, setup);
+        vm.prank(defaultAdmin);
         admin.deployExclusiveDrop(root, setup);
         uint256 newExclusiveLength = admin.factory().exclusiveDrops().length;
         testDeployGenDrop();
@@ -208,7 +226,7 @@ contract HashFitCoreTest is Test {
 
         purchaseItems = new PaidPurchaseRouter.Item[](1);
         purchaseItems[0] = purchaseItem;
-        vm.startPrank(user, user);
+        vm.startPrank(user);
         for (uint256 i; i < purchaseItems.length; i++) {
             for (uint256 j; j < purchaseItems[i].items.length; j++) {
                 usdt.mint(user, 1 ether);
@@ -230,7 +248,7 @@ contract HashFitCoreTest is Test {
                 3,
                 proof
             );
-        vm.startPrank(address(123), address(123));
+        vm.startPrank(address(123));
         router.bundledPurchase(purchaseItems);
         vm.stopPrank();
 
@@ -259,7 +277,7 @@ contract HashFitCoreTest is Test {
                 3,
                 proofs[user]
             );
-        vm.startPrank(user, user);
+        vm.startPrank(user);
         router.bundledPurchase(purchaseItems);
         vm.stopPrank();
     }
@@ -267,6 +285,9 @@ contract HashFitCoreTest is Test {
     function testSetDiscountOnItem() public {
         testDeployGenDrop();
         // set 5% discount
+        vm.expectRevert();
+        admin.setDiscount(0, 0, 500);
+        vm.prank(defaultAdmin);
         admin.setDiscount(0, 0, 500);
         PaidPurchaseRouter.Item[]
             memory purchaseItems = constructPaidRouterInput(
@@ -277,14 +298,15 @@ contract HashFitCoreTest is Test {
             );
 
         uint256 oldBal = usdt.balanceOf(address(123));
-        vm.startPrank(address(123), address(123));
+        vm.startPrank(address(123));
         router.bundledPurchase(purchaseItems);
         vm.stopPrank();
         // remove discount
         assertEq(usdt.balanceOf(address(123)), oldBal - 535);
+        vm.prank(defaultAdmin);
         admin.setDiscount(0, 0, 0);
         oldBal = usdt.balanceOf(address(123));
-        vm.startPrank(address(123), address(123));
+        vm.startPrank(address(123));
         router.bundledPurchase(purchaseItems);
         vm.stopPrank();
         HashFitCore genesis = admin.factory().genesis();
@@ -302,17 +324,21 @@ contract HashFitCoreTest is Test {
                 3,
                 proof
             );
+        vm.expectRevert();
+        admin.restock(0, 0, 10);
+        vm.prank(defaultAdmin);
         admin.restock(0, 0, 10);
         assertEq(admin.factory().genesis().totalSupply(), 100);
         assertEq(admin.factory().genesis().items()[0].maxSupply, 40);
         (uint64 maxSupply, , , , , ) = admin.factory().genesis().dropItems(0);
         assertEq(maxSupply, 40);
-        vm.startPrank(address(123), address(123));
+        vm.startPrank(address(123));
         router.bundledPurchase(purchaseItems);
         vm.stopPrank();
         HashFitCore genesis = admin.factory().genesis();
         vm.expectRevert();
         genesis.restock(0, 10);
+        vm.prank(defaultAdmin);
         admin.restock(0, 0, 10);
         assertEq(admin.factory().genesis().totalSupply(), 110);
         (uint64 newmaxSupply, , , , , ) = admin.factory().genesis().dropItems(
@@ -355,9 +381,13 @@ contract HashFitCoreTest is Test {
 
         HashFitTypes.Receiver[] memory users = new HashFitTypes.Receiver[](1);
         users[0] = user1;
+        vm.expectRevert();
+        admin.distributeKeys(users, HashFitTypes.KeyTier.MYTHIC);
+        vm.startPrank(defaultAdmin);
         admin.distributeKeys(users, HashFitTypes.KeyTier.MYTHIC);
         admin.distributeKeys(users, HashFitTypes.KeyTier.LEGENDARY);
         admin.distributeKeys(users, HashFitTypes.KeyTier.EPIC);
+        vm.stopPrank();
         assertEq(admin.factory().mythic().balanceOf(address(123)), 1);
         assertEq(admin.factory().legendary().balanceOf(address(123)), 1);
         assertEq(admin.factory().epic().balanceOf(address(123)), 1);
@@ -372,6 +402,7 @@ contract HashFitCoreTest is Test {
 
         HashFitTypes.Receiver[] memory users = new HashFitTypes.Receiver[](1);
         users[0] = user1;
+        vm.prank(defaultAdmin);
         admin.distributeKeys(users, HashFitTypes.KeyTier.MYTHIC);
         HashFitTypes.SaleItem memory purchaseItem = HashFitTypes.SaleItem({
             itemId: 0,
@@ -391,7 +422,7 @@ contract HashFitCoreTest is Test {
             memory bundledItems = new KeyPurchaseRouter.Item[](1);
         bundledItems[0] = routerInput;
         assertEq(admin.factory().mythic().balanceOf(user1.receiverAddress), 3);
-        vm.startPrank(user1.receiverAddress, user1.receiverAddress);
+        vm.startPrank(user1.receiverAddress);
         admin.factory().mythic().setApprovalForAll(
             address(admin.factory().exclusiveDrops()[0]),
             true
@@ -399,7 +430,7 @@ contract HashFitCoreTest is Test {
         vm.stopPrank();
         vm.expectRevert();
         keyRouter.bundledPurchase(bundledItems);
-        vm.startPrank(user1.receiverAddress, user1.receiverAddress);
+        vm.startPrank(user1.receiverAddress);
         keyRouter.bundledPurchase(bundledItems);
         vm.stopPrank();
         assertEq(
