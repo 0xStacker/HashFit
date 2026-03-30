@@ -40,16 +40,6 @@ abstract contract HashFitTypes {
         KeyDetail keyDetail;
     }
 
-    /// @dev Setup data for factory
-    struct FactorySetup {
-        // One time detail for epic key contract to be deployed by factory
-        Key epic;
-        // one time detail for mythic key contract to be deployed by factory
-        Key mythic;
-        // one time detail for legendary key to be deployed by factory
-        Key legendary;
-    }
-
     // Per item details
     struct Item {
         // Total units of an item present in the drop
