@@ -11,7 +11,9 @@ interface IHashFitFactory {
     function mythic() external returns (HashFitMythic);
 
     function legendary() external returns (HashFitLegendary);
+
     // Fetches the epic key
     function epic() external returns (HashFitEpic);
+
     event NewBurnerSet(address newBurner);
 }
