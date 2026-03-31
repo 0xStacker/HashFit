@@ -7,8 +7,9 @@ import { useState } from "react";
 import { useEffect } from "react";
 import { BrowserProvider } from "ethers";
 
+
 function WalletSection() {
-  const provider = new BrowserProvider(window.ethereum);
+  const provider = new BrowserProvider((window as any).ethereum);
   const [address, setAddress] = useState("Connect Wallet");
   // const [signer, setSigner] = useState();
 
@@ -20,9 +21,9 @@ function WalletSection() {
     connected();
   }, []);
 
-  if (!window.ethereum) {
+  if (!(window as any).ethereum) {
     alert("Install Metamask");
-    return;
+    return <></>;
   }
   // Connect wallet
   async function connect() {

@@ -4,6 +4,15 @@ import { Link } from "react-router-dom";
 import { ItemCard } from "./ItemCard";
 import { Bag, BagItemData } from "../App";
 import "./DropsPage.css";
+import { BrowserProvider, ethers } from "ethers";
+
+const factoryAddress = "Factory";
+const factoryAbi = [
+  "function genDrops() view returns(address[])",
+  "function exclusiveDrops() view returns(address[])",
+  "function legendary() view returns(address)",
+  "function mythic() view returns(address)",
+];
 
 function LatestDrop() {
   return (
@@ -121,6 +130,7 @@ function Market(props: DropProps) {
             discount: item.discount,
             key: item.key,
             gen: item.gen,
+            itemId: item.itemId,
             amount: 0,
             keysUsed: 0,
           };

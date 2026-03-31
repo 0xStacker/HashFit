@@ -119,6 +119,8 @@ export const items: CardProps[] = [
     discount: 0,
     gen: "0x60fC61c50186a4012AE9153c47e2643544cdE30C",
     key: crypto.randomUUID(),
+    itemId: 1,
+    priceInKeys: 0,
   },
   {
     name: "Genesis M-10",
@@ -127,6 +129,8 @@ export const items: CardProps[] = [
     discount: 0,
     gen: "0x9661A6F57F5Bc7bA370e01C8E1f2BEdF185e06c4",
     key: crypto.randomUUID(),
+    itemId: 2,
+    priceInKeys: 0,
   },
 
   {
@@ -136,6 +140,8 @@ export const items: CardProps[] = [
     discount: 500,
     gen: "0x1703b33d2e6815baf2d69d5e74d37b8da0fc023a",
     key: crypto.randomUUID(),
+    itemId: 3,
+    priceInKeys: 0,
   },
 
   {
@@ -145,6 +151,8 @@ export const items: CardProps[] = [
     discount: 0,
     gen: "0x52346350618d1Ff566511385BA79e9875c0955Ab",
     key: crypto.randomUUID(),
+    itemId: 4,
+    priceInKeys: 0,
   },
   {
     name: "Genesis M-10",
@@ -153,10 +161,12 @@ export const items: CardProps[] = [
     discount: 0,
     gen: "0x9661A6F57F5Bc7bA370e01C8E1f2BEdF185e06c4",
     key: crypto.randomUUID(),
+    itemId: 5,
+    priceInKeys: 0,
   },
 ];
 
-export const premiumItems = [
+export const premiumItems: CardProps[] = [
   {
     name: "Genesis M-50",
     image: "/assests/background/bg2.png",
@@ -165,6 +175,7 @@ export const premiumItems = [
     gen: "0x60fC61c50186a4012AE9153c47e2643544cdE30C",
     key: crypto.randomUUID(),
     priceInKeys: 3,
+    itemId: 6,
   },
   {
     name: "Genesis M-10",
@@ -174,6 +185,7 @@ export const premiumItems = [
     gen: "0x9661A6F57F5Bc7bA370e01C8E1f2BEdF185e06c4",
     key: crypto.randomUUID(),
     priceInKeys: 1,
+    itemId: 7,
   },
 
   {
@@ -184,6 +196,7 @@ export const premiumItems = [
     gen: "0x1703b33d2e6815baf2d69d5e74d37b8da0fc023a",
     key: crypto.randomUUID(),
     priceInKeys: 1,
+    itemId: 8,
   },
 
   {
@@ -194,6 +207,7 @@ export const premiumItems = [
     gen: "0x52346350618d1Ff566511385BA79e9875c0955Ab",
     key: crypto.randomUUID(),
     priceInKeys: 2,
+    itemId: 9,
   },
   {
     name: "Genesis M-10",
@@ -203,5 +217,6 @@ export const premiumItems = [
     gen: "0x9661A6F57F5Bc7bA370e01C8E1f2BEdF185e06c4",
     key: crypto.randomUUID(),
     priceInKeys: 1,
+    itemId: 10,
   },
 ];
