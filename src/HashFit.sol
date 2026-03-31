@@ -116,6 +116,23 @@ contract HashFitCore is ERC1155, IHashFitErrors, ReentrancyGuard {
         _purchaseAndClaim(_items, caller);
     }
 
+    function getTotal(
+        HashFitTypes.SaleItem[] memory _items
+    ) public view returns (uint) {
+        uint256 totalCost = 0;
+        // Destructure bag and handle sale of all items present.
+        for (uint8 i; i < _items.length; i++) {
+            HashFitTypes.SaleItem memory currentItem = _items[i];
+            uint64 discount = dropItems[currentItem.itemId].discount;
+            uint256 price = dropItems[currentItem.itemId].price;
+            uint256 amount = currentItem.amount;
+            totalCost += discount > 0
+                ? ((price * amount) - ((price * amount * discount) / BPS))
+                : price * amount;
+        }
+        return totalCost;
+    }
+
     /// @dev Purchase n units of m items with no key involvements
     function _purchaseAndClaim(
         HashFitTypes.SaleItem[] memory _items,
@@ -129,27 +146,20 @@ contract HashFitCore is ERC1155, IHashFitErrors, ReentrancyGuard {
             revert NotEnoughItems();
         }
 
-        uint256 totalCost = 0;
+        uint256 totalCost = getTotal(_items);
+        if (USDT.balanceOf(caller) < totalCost) {
+            revert InsufficientFund();
+        }
+
         // Destructure bag and handle sale of all items present.
         for (uint8 i; i < _items.length; i++) {
             HashFitTypes.SaleItem memory currentItem = _items[i];
-
             if (!_canPurchase(currentItem)) {
                 revert CannotPurchaseItem(
                     currentItem.itemId,
                     currentItem.amount
                 );
             }
-            uint64 discount = dropItems[currentItem.itemId].discount;
-            uint256 price = dropItems[currentItem.itemId].price;
-            uint256 amount = currentItem.amount;
-            totalCost += discount > 0
-                ? ((price * amount) - ((price * amount * discount) / BPS))
-                : price * amount;
-            if (USDT.balanceOf(caller) < totalCost) {
-                revert InsufficientFund();
-            }
-
             currentSupply[currentItem.itemId] += currentItem.amount;
             totalSoldItems += currentItem.amount;
             emit PurchaseAndClaim(
@@ -161,8 +171,6 @@ contract HashFitCore is ERC1155, IHashFitErrors, ReentrancyGuard {
 
             _mint(caller, currentItem.itemId, currentItem.amount, "");
         }
-
-        USDT.safeTransferFrom(caller, ADMIN, totalCost);
     }
 
     function _updateItems() internal {
