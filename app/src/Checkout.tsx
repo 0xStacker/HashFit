@@ -27,7 +27,15 @@ type CheckOutProps = {
 // for tokens (this is the Human-Readable ABI format)
 
 const paidRouterAddress = "0x00";
-const keyRoyterAddress = "0x001";
+const keyRouterAddress = "0x001";
+const mythicKeyAddress = "0x0";
+const usdtAddress = "0x0";
+
+const usdtAbi = ["function approve(address spender, uint256 value)"];
+
+const mythicAbi = [
+  "function setApprovalForAll(address operator, bool approved)",
+];
 const paidRouterAbi = [
   "function bundledPurchase((address gen, (uint8 itemId, uint64 amount)[] items, bytes32[] proof)[])",
 ];
@@ -58,6 +66,7 @@ export function Checkout(props: CheckOutProps) {
   const [showDeliveryForm, setShowDeliveryForm] = useState(false);
   const [deliveryDetails, setDeliveryDetails] =
     useState<DeliveryDetails | null>(null);
+  const usdt = new ethers.Contract(usdtAddress, usdtAbi, props.wallet.provider);
 
   const handleDeliverySubmit = async (details: DeliveryDetails) => {
     setDeliveryDetails(details);
@@ -104,7 +113,7 @@ export function Checkout(props: CheckOutProps) {
       props.wallet.provider,
     );
     const keyRouter = new ethers.Contract(
-      keyRoyterAddress,
+      keyRouterAddress,
       keyRouterAbi,
       props.wallet.provider,
     );
@@ -115,6 +124,7 @@ export function Checkout(props: CheckOutProps) {
       props.wallet.signer as ethers.JsonRpcSigner,
     );
     if (paidRouterItems.size > 0) {
+      usdt.approve(paidRouterAddress, props.bag.subTotal);
       (paidRouterWithSigner as any).bundledPurchase(
         Array.from(paidRouterItems.values()),
       );
