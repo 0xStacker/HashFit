@@ -5,6 +5,7 @@ import { ItemCard } from "./ItemCard";
 import { drops, items } from "./items";
 import { NavBar } from "./NavBar";
 import { Footer } from "./Footer";
+import { BrowserProvider } from "ethers";
 import "./NormalDropPage.css";
 
 type NormalDropPageProps = {
@@ -18,6 +19,15 @@ type NormalDropPageProps = {
         mythic: number;
       }>
     >;
+    load: (
+      provider: BrowserProvider | null,
+      address: string | null,
+    ) => Promise<void>;
+  };
+  wallet: {
+    provider: BrowserProvider | null;
+    address: string | null;
+    connect: () => void;
   };
 };
 
@@ -28,7 +38,12 @@ export function NormalDropPage(props: NormalDropPageProps) {
   if (!drop) {
     return (
       <div className="normal-drop-detail-page">
-        <NavBar for="shop" bag={props.bag} keys={props.HashFitKeyData.keys} />
+        <NavBar
+          for="shop"
+          bag={props.bag}
+          HashFitKeyData={props.HashFitKeyData}
+          wallet={props.wallet}
+        />
         <div className="drop-missing">
           <h2>Drop not found</h2>
           <p>We couldn’t find the drop you were looking for.</p>
@@ -42,7 +57,12 @@ export function NormalDropPage(props: NormalDropPageProps) {
 
   return (
     <div className="normal-drop-detail-page">
-      <NavBar for="shop" bag={props.bag} keys={props.HashFitKeyData.keys} />
+      <NavBar
+        for="shop"
+        bag={props.bag}
+        HashFitKeyData={props.HashFitKeyData}
+        wallet={props.wallet}
+      />
 
       <div className="drop-hero">
         <div className="drop-hero-media">
