@@ -3,79 +3,9 @@ import { NavItem } from "./NavBar";
 import { Link } from "react-router";
 import "./ShopNav.css";
 import { Bag } from "../App";
-import { useState } from "react";
-import { useEffect } from "react";
-import { BrowserProvider } from "ethers";
+import { WalletSection } from "./Wallet";
 
-
-function WalletSection() {
-  const provider = new BrowserProvider((window as any).ethereum);
-  const [address, setAddress] = useState("Connect Wallet");
-  // const [signer, setSigner] = useState();
-
-  useEffect(() => {
-    async function connected() {
-      const connected = await provider.send("eth_accounts", []);
-      setAddress(connected[0]);
-    }
-    connected();
-  }, []);
-
-  if (!(window as any).ethereum) {
-    alert("Install Metamask");
-    return <></>;
-  }
-  // Connect wallet
-  async function connect() {
-    const accounts = await provider.send("eth_requestAccounts", []);
-    if (accounts.length > 0) {
-      setAddress(accounts[0]);
-    }
-    // const _signer = await provider.getSigner();
-    // setSigner(_signer)
-  }
-
-  // Check connected
-  return (
-    <>
-      <button className="connect" onClick={connect}>
-        <svg
-          viewBox="0 0 24 24"
-          width="20px"
-          height="20px"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-          <g
-            id="SVGRepo_tracerCarrier"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          ></g>
-          <g id="SVGRepo_iconCarrier">
-            {" "}
-            <path
-              fill-rule="evenodd"
-              clip-rule="evenodd"
-              d="M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12ZM15 9C15 10.6569 13.6569 12 12 12C10.3431 12 9 10.6569 9 9C9 7.34315 10.3431 6 12 6C13.6569 6 15 7.34315 15 9ZM12 20.5C13.784 20.5 15.4397 19.9504 16.8069 19.0112C17.4108 18.5964 17.6688 17.8062 17.3178 17.1632C16.59 15.8303 15.0902 15 11.9999 15C8.90969 15 7.40997 15.8302 6.68214 17.1632C6.33105 17.8062 6.5891 18.5963 7.19296 19.0111C8.56018 19.9503 10.2159 20.5 12 20.5Z"
-              fill="#1d202b"
-            ></path>{" "}
-          </g>
-        </svg>
-        {address !== "Connect Wallet" && address !== undefined && (
-          <>
-            {" "}
-            {address.slice(0, 6)}...{address.slice(36)}
-          </>
-        )}
-
-        {address === undefined && <>Connect Wallet</>}
-      </button>
-    </>
-  );
-}
-
-function CartSection(props: NavProps) {
+function CartSection(props: CartProps) {
   return (
     <div className="cart-section">
       <Link to="/keys">
@@ -197,9 +127,18 @@ function CartSection(props: NavProps) {
 type NavProps = {
   bag: Bag;
   keys: { legendary: number; mythic: number };
+  wallet: {
+    address: string | null;
+    connect: () => void;
+  };
 };
 
-export function ShopNav(shop: NavProps) {
+type CartProps = {
+  bag: Bag;
+  keys: { legendary: number; mythic: number };
+};
+
+export function ShopNav(props: NavProps) {
   return (
     <>
       <Logo />
@@ -208,8 +147,11 @@ export function ShopNav(shop: NavProps) {
         <NavItem text="Drops" id="drop" ref="/shop/drop" />
         <NavItem text="Exclusives" id="exclusive" ref="/exclusive" />
       </div>
-      <CartSection bag={shop.bag} keys={shop.keys} />
-      <WalletSection />
+      <CartSection bag={props.bag} keys={props.keys} />
+      <WalletSection
+        address={props.wallet.address}
+        connect={props.wallet.connect}
+      />
     </>
   );
 }
