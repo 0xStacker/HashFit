@@ -88,7 +88,7 @@ contract HashFitCoreTest is Test {
 
         admin.initializeFactoryDeployers(deployers);
         vm.stopPrank();
-        router = new PaidPurchaseRouter();
+        router = new PaidPurchaseRouter(defaultAdmin, address(usdt));
         keyRouter = new KeyPurchaseRouter();
         proofs[wlUsers[0]].push(
             bytes32(
@@ -260,9 +260,9 @@ contract HashFitCoreTest is Test {
         for (uint256 i; i < purchaseItems.length; i++) {
             for (uint256 j; j < purchaseItems[i].items.length; j++) {
                 usdt.mint(user, 1 ether);
-                usdt.approve(purchaseItems[i].gen, type(uint256).max);
             }
         }
+        usdt.approve(address(router), type(uint256).max);
         vm.stopPrank();
     }
 

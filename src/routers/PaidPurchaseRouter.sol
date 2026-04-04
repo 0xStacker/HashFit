@@ -11,7 +11,10 @@ contract PaidPurchaseRouter {
     IERC20 USDT;
     address ADMIN;
 
-    constructor() {}
+    constructor(address _admin, address paymentToken) {
+        USDT = IERC20(paymentToken);
+        ADMIN = _admin;
+    }
 
     struct Item {
         address gen;
@@ -19,14 +22,17 @@ contract PaidPurchaseRouter {
         bytes32[] proof;
     }
 
+    error EmptyCart();
+    error BadCartConfig();
+
     function bundledPurchase(Item[] memory _items) external payable {
         if (_items.length < 1) {
-            revert("error");
+            revert EmptyCart();
         }
 
         for (uint256 i; i < _items.length; i++) {
             if (_items[i].items.length < 1) {
-                revert("error");
+                revert BadCartConfig();
             }
             HashFitCore drop = HashFitCore(_items[i].gen);
             uint cost = drop.getTotal(_items[i].items);
