@@ -6,8 +6,10 @@ import { Checkout } from "./Checkout";
 import { ExclusiveDropPage } from "./components/ExclusiveDropPage";
 import { DropDetailPage } from "./components/DropDetailPage";
 import { NormalDropPage } from "./components/NormalDropPage";
-import { BrowserProvider, ethers } from "ethers";
+import { BrowserProvider, ethers, JsonRpcSigner } from "ethers";
+import { useWallet } from "./hooks/Wallet";
 
+// Full details of an item
 export type BagItemData = {
   name: string;
   image: string;
@@ -26,82 +28,67 @@ export type Bag = {
   subTotal: number;
 };
 
+// Wallet config
 type Wallet = {
-  provider: ethers.BrowserProvider;
-  signer: ethers.JsonRpcSigner | undefined
-}
+  provider: BrowserProvider | null;
+  address: string | null;
+  getSigner: JsonRpcSigner | null;
+};
 
-const mythicAddress = "Mythic";
-const legendaryAddress = "Legendary";
-
-const keysABI = [
-  "function balanceOf(address) returns (uint256)",
-  "function setApprovalForAll(address operator, bool approved)",
-];
-
-async function fetchDrops() {}
-
+// Global bag
 const shopBag: Bag = {
   items: new Map<string, BagItemData>(),
   subTotal: 0,
 };
 
+// Fetch HashFit Keys held by user
+export async function fetchKeys(
+  provider: BrowserProvider | null,
+  address: string | null,
+) {
+  const mythicAddress = "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9";
+  const legendaryAddress = "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9";
 
-// Set provider
-const provider = new BrowserProvider((window as any).ethereum);
-const wallet: Wallet = {provider: provider,
-  signer: undefined
-}
+  const keysABI = [
+    "function balanceOf(address) view returns (uint256)",
+    "function setApprovalForAll(address operator, bool approved)",
+  ];
 
+  if (!provider) {
+    return { mythic: 0, legendary: 0 };
+  }
 
-// Set signer
-async function walletSetup() {
-  const signer = await provider.getSigner();
-  wallet.signer = signer
-}
-
-// Fetch keys held by signer
-async function fetchKeys() {
-  const acc = await provider.send("eth_accounts", []);
   const mythicKeyContract = new ethers.Contract(
     mythicAddress,
     keysABI,
     provider,
   );
-  const mythicKeys = await mythicKeyContract.balanceOf(acc[0]);
+  const mythicKeys = await mythicKeyContract.balanceOf(address);
   const legendaryKeyContract = new ethers.Contract(
     legendaryAddress,
     keysABI,
     provider,
   );
-  const leggyKeys = await legendaryKeyContract.balanceOf(acc[0]);
-  console.log(mythicKeys);
-  userKeys.legendary = leggyKeys
-  userKeys.mythic = mythicKeys
+  const leggyKeys = await legendaryKeyContract.balanceOf(address);
+  return { mythic: mythicKeys, legendary: leggyKeys };
 }
-
-
-const userKeys = {legendary: 0,
-  mythic: 0
-}
-
 
 export function App() {
-  useEffect(
-    () => {
-      async function _fetchKeys(){
-        await walletSetup()
-        await fetchKeys()
-      }
-      _fetchKeys()
-    }
-  )
-
-  const [keys, setKeys] = useState(userKeys);
+  const { provider, address, signer, connect } = useWallet();
+  const [keys, setKeys] = useState({ legendary: 0, mythic: 0 });
   const [bag, setBag] = useState(shopBag);
+
+  async function loadKeys(
+    provider: BrowserProvider | null,
+    address: string | null,
+  ) {
+    const keys = await fetchKeys(provider, address);
+    setKeys({ legendary: keys.legendary, mythic: keys.mythic });
+  }
 
   const HashFitKeys = {
     keys: keys,
+    load: loadKeys,
     set: setKeys,
   };
 
@@ -111,7 +98,17 @@ export function App() {
       <Route
         path="/shop/drop"
         element={
-          <Shop bag={bag} setBag={setBag} HashFitKeyData={HashFitKeys} />
+          <Shop
+            bag={bag}
+            setBag={setBag}
+            HashFitKeyData={HashFitKeys}
+            wallet={{
+              provider: provider,
+              address: address,
+              signer: signer,
+              connect: connect,
+            }}
+          />
         }
       />
       <Route
@@ -121,6 +118,11 @@ export function App() {
             bag={bag}
             setBag={setBag}
             HashFitKeyData={HashFitKeys}
+            wallet={{
+              provider: provider,
+              address: address,
+              connect: connect,
+            }}
           />
         }
       />
@@ -131,6 +133,7 @@ export function App() {
             bag={bag}
             setBag={setBag}
             HashFitKeyData={HashFitKeys}
+            wallet={{ provider: provider, address: address, connect: connect }}
           />
         }
       />
@@ -142,6 +145,7 @@ export function App() {
             bag={bag}
             setBag={setBag}
             HashFitKeyData={HashFitKeys}
+            wallet={{ provider: provider, address: address, connect: connect }}
           />
         }
       />
@@ -152,7 +156,12 @@ export function App() {
             bag={bag}
             setBag={setBag}
             HashFitKeyData={HashFitKeys}
-            wallet={wallet}
+            wallet={{
+              provider: provider,
+              address: address,
+              signer: signer,
+              connect: connect,
+            }}
           />
         }
       ></Route>

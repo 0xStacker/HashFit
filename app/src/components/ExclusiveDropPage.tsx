@@ -4,6 +4,7 @@ import { PremiumDrop } from "./PremiumDrop";
 import { premiumDrops } from "./items";
 import { NavBar } from "./NavBar";
 import { Footer } from "./Footer";
+import { BrowserProvider } from "ethers";
 import "./ExclusiveDropPage.css";
 
 type ExclusiveDropPageProps = {
@@ -17,13 +18,28 @@ type ExclusiveDropPageProps = {
         mythic: number;
       }>
     >;
+    load: (
+      provider: BrowserProvider | null,
+      address: string | null,
+    ) => Promise<void>;
+  };
+
+  wallet: {
+    provider: BrowserProvider | null;
+    address: string | null;
+    connect: () => void;
   };
 };
 
 export function ExclusiveDropPage(props: ExclusiveDropPageProps) {
   return (
     <>
-      <NavBar for="shop" bag={props.bag} keys={props.HashFitKeyData.keys} />
+      <NavBar
+        for="shop"
+        bag={props.bag}
+        HashFitKeyData={props.HashFitKeyData}
+        wallet={props.wallet}
+      />
       <div className="exclusive-drop-page">
         <div className="exclusive-hero">
           <div className="hero-background">

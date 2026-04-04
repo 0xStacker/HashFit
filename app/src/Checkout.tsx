@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Bag, BagItemData } from "./App";
 import "./Checkout.css";
 import { NavBar } from "./components/NavBar";
 import { DeliveryForm, DeliveryDetails } from "./components/DeliveryForm";
-import { BrowserProvider, ethers } from "ethers";
+import { BrowserProvider, ethers, JsonRpcSigner } from "ethers";
 
 type CheckOutProps = {
   bag: Bag;
@@ -16,10 +16,16 @@ type CheckOutProps = {
         mythic: number;
       }>
     >;
+    load: (
+      provider: BrowserProvider | null,
+      address: string | null,
+    ) => Promise<void>;
   };
   wallet: {
-    provider: BrowserProvider;
-    signer: ethers.JsonRpcSigner | undefined;
+    provider: BrowserProvider | null;
+    address: string | null;
+    signer: JsonRpcSigner | null;
+    connect: () => void;
   };
 };
 
@@ -66,6 +72,7 @@ export function Checkout(props: CheckOutProps) {
   const [showDeliveryForm, setShowDeliveryForm] = useState(false);
   const [deliveryDetails, setDeliveryDetails] =
     useState<DeliveryDetails | null>(null);
+  useEffect(() => {});
   const usdt = new ethers.Contract(usdtAddress, usdtAbi, props.wallet.provider);
 
   const handleDeliverySubmit = async (details: DeliveryDetails) => {
@@ -138,7 +145,12 @@ export function Checkout(props: CheckOutProps) {
 
   return (
     <>
-      <NavBar for="shop" bag={props.bag} keys={props.HashFitKeyData.keys} />
+      <NavBar
+        for="shop"
+        bag={props.bag}
+        HashFitKeyData={props.HashFitKeyData}
+        wallet={props.wallet}
+      />
       <div className="items-checkout">
         <div className="item-box">
           <h3 className="bag-title">Bag({props.bag.items.size})</h3>

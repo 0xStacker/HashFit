@@ -4,14 +4,19 @@ import { Link } from "react-router-dom";
 import { ItemCard } from "./ItemCard";
 import { Bag, BagItemData } from "../App";
 import "./DropsPage.css";
-import { BrowserProvider, ethers } from "ethers";
+import { BrowserProvider, ethers, JsonRpcSigner } from "ethers";
+import { useEffect } from "react";
 
-const factoryAddress = "Factory";
+const factoryAddress = "0x75537828f2ce51be7289709686A69CbFDbB714F1";
 const factoryAbi = [
   "function genDrops() view returns(address[])",
   "function exclusiveDrops() view returns(address[])",
   "function legendary() view returns(address)",
   "function mythic() view returns(address)",
+];
+
+const dropAbi = [
+  "function items() view returns((uint64 maxSupply, uint64 discount, uint64 priceInKeys, uint256 price, string name, string uri)[] memory)",
 ];
 
 function LatestDrop() {
@@ -68,6 +73,29 @@ function LatestDrop() {
 }
 
 function Market(props: DropProps) {
+  async function fetchItems() {
+    const factoryContract = new ethers.Contract(
+      factoryAddress,
+      factoryAbi,
+      props.wallet.provider,
+    );
+
+    const drops: any[] = await factoryContract.genDrops();
+    const items: Record<string, any[]> = {};
+    for (const i of drops) {
+      const drop = new ethers.Contract(i, dropAbi, props.wallet.provider);
+      const dropItems = await drop.items();
+      items[i] = dropItems;
+    }
+    console.log(items);
+  }
+  useEffect(() => {
+    async function loadItems() {
+      await fetchItems();
+    }
+    loadItems();
+  });
+
   return (
     <div className="market">
       <h3>Marketplace</h3>
@@ -146,13 +174,18 @@ type DropProps = {
     current: Bag;
     setBag: React.Dispatch<React.SetStateAction<Bag>>;
   };
+  wallet: {
+    provider: BrowserProvider | null;
+    address: string | null;
+    signer: JsonRpcSigner | null;
+  };
 };
 
 export function DropsPage(props: DropProps) {
   return (
     <>
       <LatestDrop />
-      <Market bag={props.bag} />
+      <Market bag={props.bag} wallet={props.wallet} />
     </>
   );
 }
