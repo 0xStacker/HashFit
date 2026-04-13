@@ -89,7 +89,10 @@ contract HashFitCoreTest is Test {
         admin.initializeFactoryDeployers(deployers);
         vm.stopPrank();
         router = new PaidPurchaseRouter(defaultAdmin, address(usdt));
-        keyRouter = new KeyPurchaseRouter();
+        keyRouter = new KeyPurchaseRouter(
+            address(admin.factory().keyBurner()),
+            mythic
+        );
         proofs[wlUsers[0]].push(
             bytes32(
                 0x1329b10cd9884c57ade41669fe693e126eb9b5236d94980d18cc92c1b5cae61f
@@ -135,7 +138,7 @@ contract HashFitCoreTest is Test {
         HashFitTypes.Item memory item1 = HashFitTypes.Item({
             maxSupply: data.maxSupply,
             discount: 0,
-            priceInKeys: data.maxSupply,
+            priceInKeys: data.priceInKeys,
             price: 50,
             name: "Short",
             uri: "test/short"
@@ -166,7 +169,9 @@ contract HashFitCoreTest is Test {
             uri: "test/drop0",
             items: items,
             token: address(usdt),
-            routers: routers
+            routers: routers,
+            name: "Test Drop",
+            symbol: "TEST"
         });
     }
 
@@ -377,6 +382,7 @@ contract HashFitCoreTest is Test {
         assertEq(newmaxSupply, 50);
     }
 
+    // Ensure items cannot be transferred
     function testNonTransferability() public {
         testPurchaseItemFromGenDrop();
 
@@ -403,6 +409,7 @@ contract HashFitCoreTest is Test {
     }
 
     function testDistributeKeys() public {
+        // Deploy Gen drop and purchase an item from it
         testPurchaseItemFromGenDrop();
         HashFitTypes.Receiver memory user1 = HashFitTypes.Receiver({
             receiverAddress: address(123),
@@ -411,13 +418,16 @@ contract HashFitCoreTest is Test {
 
         HashFitTypes.Receiver[] memory users = new HashFitTypes.Receiver[](1);
         users[0] = user1;
+        // Should revert because caller is not admin
         vm.expectRevert();
         admin.distributeKeys(users, HashFitTypes.KeyTier.MYTHIC);
+        // Distribute keys
         vm.startPrank(defaultAdmin);
         admin.distributeKeys(users, HashFitTypes.KeyTier.MYTHIC);
         admin.distributeKeys(users, HashFitTypes.KeyTier.LEGENDARY);
         admin.distributeKeys(users, HashFitTypes.KeyTier.EPIC);
         vm.stopPrank();
+        // Verify checks
         assertEq(admin.factory().mythic().balanceOf(address(123)), 1);
         assertEq(admin.factory().legendary().balanceOf(address(123)), 1);
         assertEq(admin.factory().epic().balanceOf(address(123)), 1);
@@ -438,14 +448,10 @@ contract HashFitCoreTest is Test {
             itemId: 0,
             amount: 1
         });
-        uint256[] memory keyIds = new uint256[](3);
-        keyIds[0] = 1;
-        keyIds[1] = 2;
-        keyIds[2] = 3;
+
         KeyPurchaseRouter.Item memory routerInput = KeyPurchaseRouter.Item({
             gen: address(admin.factory().exclusiveDrops()[0]),
-            item: purchaseItem,
-            keyIds: keyIds
+            item: purchaseItem
         });
 
         KeyPurchaseRouter.Item[]
@@ -453,13 +459,9 @@ contract HashFitCoreTest is Test {
         bundledItems[0] = routerInput;
         assertEq(admin.factory().mythic().balanceOf(user1.receiverAddress), 3);
         vm.startPrank(user1.receiverAddress);
-        admin.factory().mythic().setApprovalForAll(
-            address(admin.factory().exclusiveDrops()[0]),
-            true
-        );
+        admin.factory().mythic().setApprovalForAll(address(keyRouter), true);
         vm.stopPrank();
-        vm.expectRevert();
-        keyRouter.bundledPurchase(bundledItems);
+
         vm.startPrank(user1.receiverAddress);
         keyRouter.bundledPurchase(bundledItems);
         vm.stopPrank();
@@ -470,18 +472,9 @@ contract HashFitCoreTest is Test {
             ),
             1
         );
-        // test incomplete key set
 
-        routerInput.keyIds = new uint256[](1);
-        bundledItems[0] = routerInput;
-        vm.expectRevert();
-        keyRouter.bundledPurchase(bundledItems);
-        routerInput.keyIds = new uint256[](3);
         routerInput.item.amount = 40;
         bundledItems[0] = routerInput;
-        vm.expectRevert();
-        keyRouter.bundledPurchase(bundledItems);
-
         vm.expectRevert();
         keyRouter.bundledPurchase(bundledItems);
         // Ensure all keys were burnt

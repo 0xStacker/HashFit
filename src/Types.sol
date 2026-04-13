@@ -73,6 +73,10 @@ abstract contract HashFitTypes {
         Routers routers;
         // contract uri
         string uri;
+        // Contract level name
+        string name;
+        // Contract level symbol
+        string symbol;
         // Unique items in the drop. see {Item} struct.
         Item[] items;
     }

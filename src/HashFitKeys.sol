@@ -1,7 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.25;
 import {HashFitTypes} from "./Types.sol";
-import {ERC721A} from "@ERC721A/ERC721A.sol";
+import {ERC721Enumerable} from "@openzeppelin/token/ERC721/extensions/ERC721Enumerable.sol";
+import {ERC721} from "@openzeppelin/token/ERC721/ERC721.sol";
 import {IHashFitKey} from "./interfaces/IHashFitKey.sol";
 
 /**
@@ -34,21 +35,28 @@ import {IHashFitKey} from "./interfaces/IHashFitKey.sol";
  *
  *  Epic Keys:
  *   - Epic keys are basically minor coupons that can be applied on items to get further discounts
+ *
+ * Standard ERC721 is used over ERC721A for user holding enumerability when user tries to make key purchases from {HashFItExclusive} contract.
+ * This allows us to know the tokenIds held by user which is neccessary for the redeem logic.
+ * The implication of this is higher gas cost during key distributions. but this is controlled by limiting the batch key distribution function to 10 per tx.
  */
 
-abstract contract KeyScaffold is ERC721A, IHashFitKey {
+abstract contract KeyScaffold is ERC721Enumerable, IHashFitKey {
     // How many generations key is valid for
     uint8 internal immutable KEY_VALIDITY;
     // Factory address
     address internal immutable ADMIN;
     // Generation in which key was created
     uint64 private immutable GENERATION;
+    uint256 currentTokenId;
     // Base uri
     string public baseURI;
 
-    constructor(HashFitTypes.Metadata memory _keyMetaData, HashFitTypes.KeyDetail memory _keydetail, address _admin)
-        ERC721A(_keyMetaData.name, _keyMetaData.symbol)
-    {
+    constructor(
+        HashFitTypes.Metadata memory _keyMetaData,
+        HashFitTypes.KeyDetail memory _keydetail,
+        address _admin
+    ) ERC721(_keyMetaData.name, _keyMetaData.symbol) {
         ADMIN = _admin;
         baseURI = _keyMetaData.uri;
         KEY_VALIDITY = _keydetail.validity;
@@ -72,15 +80,27 @@ abstract contract KeyScaffold is ERC721A, IHashFitKey {
     }
 
     // EIP 165
-    function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
-        return interfaceId == type(IHashFitKey).interfaceId || super.supportsInterface(interfaceId);
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view override returns (bool) {
+        return
+            interfaceId == type(IHashFitKey).interfaceId ||
+            super.supportsInterface(interfaceId);
     }
 
     /// @dev admin gated function used for manual key distribution.
-    function distributeKeys(HashFitTypes.Receiver[] memory receivers) external onlyAdmin {
+    function distributeKeys(
+        HashFitTypes.Receiver[] memory receivers
+    ) external onlyAdmin {
         for (uint256 i; i < receivers.length; i++) {
-            _mint(receivers[i].receiverAddress, receivers[i].amount);
-            emit DistributeKeys(receivers[i].receiverAddress, receivers[i].amount);
+            for (uint256 j; j < receivers[i].amount; j++) {
+                _mint(receivers[i].receiverAddress, _nextTokenId());
+                currentTokenId = _nextTokenId();
+            }
+            emit DistributeKeys(
+                receivers[i].receiverAddress,
+                receivers[i].amount
+            );
         }
     }
 
@@ -103,8 +123,12 @@ abstract contract KeyScaffold is ERC721A, IHashFitKey {
     }
 
     // keyId starts from 1
-    function _startTokenId() internal pure override returns (uint256) {
+    function _startTokenId() internal pure returns (uint256) {
         return 1;
+    }
+
+    function _nextTokenId() internal view returns (uint256) {
+        return currentTokenId + 1;
     }
 
     function _baseURI() internal view override returns (string memory) {
@@ -126,9 +150,19 @@ abstract contract KeyScaffold is ERC721A, IHashFitKey {
 contract HashFitMythic is KeyScaffold {
     bytes32 internal constant TIER = keccak256("MYTHIC");
 
-    constructor(string memory _uri, HashFitTypes.KeyDetail memory _keyDetail, address _admin)
+    constructor(
+        string memory _uri,
+        HashFitTypes.KeyDetail memory _keyDetail,
+        address _admin
+    )
         KeyScaffold(
-            HashFitTypes.Metadata({name: "HashFit Mythic Key", symbol: "MYTHIC", uri: _uri}), _keyDetail, _admin
+            HashFitTypes.Metadata({
+                name: "HashFit Mythic Key",
+                symbol: "MYTHIC",
+                uri: _uri
+            }),
+            _keyDetail,
+            _admin
         )
     {}
 
@@ -145,9 +179,19 @@ contract HashFitMythic is KeyScaffold {
 contract HashFitLegendary is KeyScaffold {
     bytes32 internal constant TIER = keccak256("LEGENDARY");
 
-    constructor(string memory _uri, HashFitTypes.KeyDetail memory _keyDetail, address _admin)
+    constructor(
+        string memory _uri,
+        HashFitTypes.KeyDetail memory _keyDetail,
+        address _admin
+    )
         KeyScaffold(
-            HashFitTypes.Metadata({name: "HashFit Legendary Key", symbol: "LEGENDARY", uri: _uri}), _keyDetail, _admin
+            HashFitTypes.Metadata({
+                name: "HashFit Legendary Key",
+                symbol: "LEGENDARY",
+                uri: _uri
+            }),
+            _keyDetail,
+            _admin
         )
     {}
 
@@ -159,8 +203,20 @@ contract HashFitLegendary is KeyScaffold {
 contract HashFitEpic is KeyScaffold {
     bytes32 internal constant TIER = keccak256("EPIC");
 
-    constructor(string memory _uri, HashFitTypes.KeyDetail memory _keyDetail, address _admin)
-        KeyScaffold(HashFitTypes.Metadata({name: "HashFit Epic Key", symbol: "EPIC", uri: _uri}), _keyDetail, _admin)
+    constructor(
+        string memory _uri,
+        HashFitTypes.KeyDetail memory _keyDetail,
+        address _admin
+    )
+        KeyScaffold(
+            HashFitTypes.Metadata({
+                name: "HashFit Epic Key",
+                symbol: "EPIC",
+                uri: _uri
+            }),
+            _keyDetail,
+            _admin
+        )
     {}
 
     function keyTier() external pure override returns (bytes32) {
