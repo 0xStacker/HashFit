@@ -18,8 +18,13 @@ import {SafeERC20} from "@openzeppelin/token/ERC20/utils/SafeERC20.sol";
  *
  *
  */
-contract HashFitCore is ERC1155, IHashFitErrors, ReentrancyGuard {
+contract HashFitCore is ERC1155, ReentrancyGuard {
     using SafeERC20 for IERC20;
+    // Contract level name
+    string public name;
+
+    // Contract level symbol
+    string public symbol;
 
     // USDT
     IERC20 immutable USDT;
@@ -67,13 +72,19 @@ contract HashFitCore is ERC1155, IHashFitErrors, ReentrancyGuard {
         HashFitTypes.HashFitDrop memory setup,
         address _admin
     ) ERC1155(setup.uri) ReentrancyGuard() {
+        // Configure contract settings
         GENERATION = setup.generation;
-        contractUri = setup.uri;
         SALE_START_TIME = setup.saleStartTime;
         CYPHERING_PHASE_DURATION = setup.cypheringPhaseDuration;
         ADMIN = _admin;
         USDT = IERC20(setup.token);
         PAID_ROUTER = setup.routers.paidRouter;
+
+        // Configure contract metadata
+        name = setup.name;
+        symbol = setup.symbol;
+        contractUri = setup.uri;
+
         // Add unique drop items to record
         for (uint256 i; i < setup.items.length; i++) {
             dropItems[i] = setup.items[i];
@@ -91,7 +102,7 @@ contract HashFitCore is ERC1155, IHashFitErrors, ReentrancyGuard {
 
     function _onlyAdmin() internal view {
         if (msg.sender != ADMIN) {
-            revert UnauthorizedAccess();
+            revert IHashFitErrors.UnauthorizedAccess();
         }
     }
 
@@ -102,18 +113,8 @@ contract HashFitCore is ERC1155, IHashFitErrors, ReentrancyGuard {
 
     function _onlyPaidRouter() internal view {
         if (msg.sender != PAID_ROUTER) {
-            revert UnauthorizedAccess();
+            revert IHashFitErrors.UnauthorizedAccess();
         }
-    }
-
-    /// @dev Purchase an item from drop and claim identity SBT
-    /// @param _items is the list of all items to be purchased
-    function purchaseAndClaim(
-        HashFitTypes.SaleItem[] memory _items,
-        address caller,
-        bytes32[] memory
-    ) external payable virtual nonReentrant onlyPaidRouter {
-        _purchaseAndClaim(_items, caller);
     }
 
     function getTotal(
@@ -134,35 +135,36 @@ contract HashFitCore is ERC1155, IHashFitErrors, ReentrancyGuard {
     }
 
     /// @dev Purchase n units of m items with no key involvements
-    function _purchaseAndClaim(
+    function purchaseAndClaim(
         HashFitTypes.SaleItem[] memory _items,
-        address caller
-    ) internal {
+        address caller,
+        bytes32[] memory
+    ) external nonReentrant onlyPaidRouter {
         if (block.timestamp < SALE_START_TIME) {
-            revert SaleNotStarted();
+            revert IHashFitErrors.SaleNotStarted();
         }
 
         if (_items.length == 0) {
-            revert NotEnoughItems();
+            revert IHashFitErrors.NotEnoughItems();
         }
 
         uint256 totalCost = getTotal(_items);
         if (USDT.balanceOf(caller) < totalCost) {
-            revert InsufficientFund();
+            revert IHashFitErrors.InsufficientFund();
         }
 
         // Destructure bag and handle sale of all items present.
         for (uint8 i; i < _items.length; i++) {
             HashFitTypes.SaleItem memory currentItem = _items[i];
             if (!_canPurchase(currentItem)) {
-                revert CannotPurchaseItem(
+                revert IHashFitErrors.CannotPurchaseItem(
                     currentItem.itemId,
                     currentItem.amount
                 );
             }
             currentSupply[currentItem.itemId] += currentItem.amount;
             totalSoldItems += currentItem.amount;
-            emit PurchaseAndClaim(
+            emit IHashFitErrors.PurchaseAndClaim(
                 caller,
                 currentItem.itemId,
                 currentItem.amount,
@@ -217,9 +219,13 @@ contract HashFitCore is ERC1155, IHashFitErrors, ReentrancyGuard {
     /// @dev fetches the URI for an item
     function uri(uint256 itemId) public view override returns (string memory) {
         if (!_itemExists(itemId)) {
-            revert UriRequestForNonExistentToken();
+            revert IHashFitErrors.UriRequestForNonExistentToken();
         }
         return dropItems[itemId].uri;
+    }
+
+    function startTime() external view returns (uint256) {
+        return SALE_START_TIME;
     }
 
     /// @dev getter for all unique drop items
@@ -249,7 +255,7 @@ contract HashFitCore is ERC1155, IHashFitErrors, ReentrancyGuard {
         /*value*/
         bytes memory /*data*/
     ) public pure override {
-        revert NonTransferrable();
+        revert IHashFitErrors.NonTransferrable();
     }
 
     function safeBatchTransferFrom(
@@ -263,7 +269,7 @@ contract HashFitCore is ERC1155, IHashFitErrors, ReentrancyGuard {
         /*values*/
         bytes memory /*data*/
     ) public pure override {
-        revert NonTransferrable();
+        revert IHashFitErrors.NonTransferrable();
     }
 
     function setApprovalForAll(
@@ -271,6 +277,6 @@ contract HashFitCore is ERC1155, IHashFitErrors, ReentrancyGuard {
         /*operator*/
         bool /*approved*/
     ) public pure override {
-        revert NonTransferrable();
+        revert IHashFitErrors.NonTransferrable();
     }
 }
