@@ -32,10 +32,10 @@ type CheckOutProps = {
 // The ERC-20 Contract ABI, which is a common contract interface
 // for tokens (this is the Human-Readable ABI format)
 
-const paidRouterAddress = "0x00";
-const keyRouterAddress = "0x001";
-const mythicKeyAddress = "0x0";
-const usdtAddress = "0x0";
+const paidRouterAddress = "0x0f5D1ef48f12b6f691401bfe88c2037c690a6afe";
+const keyRouterAddress = "0x90118d110B07ABB82Ba8980D1c5cC96EeA810d2C";
+const mythicKeyAddress = "0x712516e61C8B383dF4A63CFe83d7701Bce54B03e";
+const usdtAddress = "0x8464135c8F25Da09e49BC8782676a84730C318bC";
 
 const usdtAbi = ["function approve(address spender, uint256 value)"];
 
@@ -43,11 +43,11 @@ const mythicAbi = [
   "function setApprovalForAll(address operator, bool approved)",
 ];
 const paidRouterAbi = [
-  "function bundledPurchase((address gen, (uint8 itemId, uint64 amount)[] items, bytes32[] proof)[])",
+  "function bundledPurchase((address gen, (uint8 itemId, uint64 amount)[] items, bytes32[] proof)[]) payable",
 ];
 
 const keyRouterAbi = [
-  "function bundledPurchase((address gen, (uint8 itemId, uint64 amount) item, uin256[] keyIds)[])",
+  "function bundledPurchase((address gen, (uint8 itemId, uint64 amount) item)[]) payable",
 ];
 
 type Item = {
@@ -57,14 +57,13 @@ type Item = {
 
 type PaidRouterItems = {
   gen: string;
-  items: Item[];
+  items: [number, number][];
   proof: [];
 };
 
 type KeyRouterItems = {
   gen: string;
-  item: Item;
-  proof: [];
+  item: [number, number];
 };
 
 export function Checkout(props: CheckOutProps) {
@@ -72,75 +71,112 @@ export function Checkout(props: CheckOutProps) {
   const [showDeliveryForm, setShowDeliveryForm] = useState(false);
   const [deliveryDetails, setDeliveryDetails] =
     useState<DeliveryDetails | null>(null);
+  const [orderPlaced, setOrderPlaced] = useState(false);
   useEffect(() => {});
   const usdt = new ethers.Contract(usdtAddress, usdtAbi, props.wallet.provider);
+  const mythic = new ethers.Contract(
+    mythicKeyAddress,
+    mythicAbi,
+    props.wallet.provider,
+  );
 
   const handleDeliverySubmit = async (details: DeliveryDetails) => {
     setDeliveryDetails(details);
-    alert("Delivery details saved! Processing Payment..");
     const paidRouterItems = new Map<string, PaidRouterItems>();
     const keyRouterItems: KeyRouterItems[] = [];
     Array.from(props.bag.items.values()).map((v: BagItemData) => {
       if ((v.keysUsed as number) > 0) {
         keyRouterItems.push({
           gen: v.gen,
-          item: {
-            itemId: v.itemId,
-            amount: v.amount,
-          },
-          proof: [],
+          item: [v.itemId, v.amount],
         });
       } else {
         if (paidRouterItems.has(v.gen)) {
-          (paidRouterItems.get(v.gen) as PaidRouterItems).items.push({
-            itemId: v.itemId,
-            amount: v.amount,
-          });
+          (paidRouterItems.get(v.gen) as PaidRouterItems).items.push([
+            v.itemId,
+            v.amount,
+          ]);
         } else {
           paidRouterItems.set(v.gen, {
             gen: v.gen,
-            items: [
-              {
-                itemId: v.itemId,
-                amount: v.amount,
-              },
-            ],
+            items: [[v.itemId, v.amount]],
             proof: [],
           });
         }
       }
       return;
     });
-    console.log(paidRouterItems);
-    console.log(keyRouterItems);
 
     const paidRouter = new ethers.Contract(
       paidRouterAddress,
       paidRouterAbi,
       props.wallet.provider,
     );
+
     const keyRouter = new ethers.Contract(
       keyRouterAddress,
       keyRouterAbi,
       props.wallet.provider,
     );
-    const keyRouterWithSigner = keyRouter.connect(
-      props.wallet.signer as ethers.JsonRpcSigner,
-    );
-    const paidRouterWithSigner = paidRouter.connect(
-      props.wallet.signer as ethers.JsonRpcSigner,
-    );
-    if (paidRouterItems.size > 0) {
-      usdt.approve(paidRouterAddress, props.bag.subTotal);
-      (paidRouterWithSigner as any).bundledPurchase(
-        Array.from(paidRouterItems.values()),
-      );
-    }
-    if (keyRouterItems.length > 0) {
-      (keyRouterWithSigner as any).bundledPurchase(keyRouterItems);
+
+    const keyRouterWithSigner = keyRouter.connect(props.wallet.signer);
+
+    const usdtWithSigner = usdt.connect(props.wallet.signer);
+    const mythicWithSigner = mythic.connect(props.wallet.signer);
+    const paidRouterWithSigner = paidRouter.connect(props.wallet.signer);
+
+    // Submitting empty cart
+    if (keyRouterItems.length < 1 && paidRouterItems.size < 1) {
+      return;
     }
 
-    console.log("Success");
+    let keyReceipt = 0;
+    let paidReceipt = 0;
+
+    // Parse paid cart items and send payment txn to blockchain
+    if (paidRouterItems.size > 0) {
+      // Approve USDT spending
+      await (usdtWithSigner as any).approve(
+        paidRouterAddress,
+        ethers.parseEther(String(props.bag.subTotal)),
+      );
+
+      let data: [
+        address: string,
+        items: [number, number][],
+        proof: string[],
+      ][] = [];
+      for (const i of Array.from(paidRouterItems.values())) {
+        data.push([i.gen, i.items, i.proof]);
+      }
+      const paidPurchaseTxn = await (
+        paidRouterWithSigner as any
+      ).bundledPurchase(data);
+      const txHash = await paidPurchaseTxn.wait();
+      paidReceipt = txHash.status;
+      console.log(paidReceipt);
+    }
+
+    // Parse purchases involving key usage and send payment txn to blockchain
+    if (keyRouterItems.length > 0) {
+      // Approve NFT spending
+      await (mythicWithSigner as any).setApprovalForAll(keyRouterAddress, true);
+      let keyQueryData: [address: string, items: [number, number]][] = [];
+      for (const i of Array.from(keyRouterItems.values())) {
+        keyQueryData.push([i.gen, i.item]);
+      }
+      console.log(keyQueryData);
+      const keyTxn = await (keyRouterWithSigner as any).bundledPurchase(
+        keyQueryData,
+      );
+      const txHash = await keyTxn.wait();
+      keyReceipt = txHash.status;
+      console.log(keyReceipt);
+    }
+
+    props.bag.items.clear();
+    props.bag.subTotal = 0;
+    setOrderPlaced(true);
   };
 
   return (
@@ -229,11 +265,6 @@ export function Checkout(props: CheckOutProps) {
                 keysUsed: currentItem.amount,
               });
 
-              props.HashFitKeyData.set({
-                ...props.HashFitKeyData.keys,
-                mythic: props.HashFitKeyData.keys.mythic - requiredKeys,
-              });
-
               props.setBag({
                 items: oldBag,
                 subTotal: getSubTotal(oldBag),
@@ -254,7 +285,7 @@ export function Checkout(props: CheckOutProps) {
                   <span className="c-price-sec">
                     <svg
                       width="25px"
-                      height="25x"
+                      height="25px"
                       viewBox="0 0 32 32"
                       xmlns="http://www.w3.org/2000/svg"
                       fill="#000000"
@@ -561,6 +592,22 @@ export function Checkout(props: CheckOutProps) {
           onSubmit={handleDeliverySubmit}
           initialDetails={deliveryDetails || undefined}
         />
+      )}
+
+      {orderPlaced && (
+        <div className="order-placed-view">
+          <div>
+            <h2>Order Confirmed!</h2>
+            <p>
+              🎉 Your order has been successfully placed! We're preparing your
+              items and will notify you once they're on the way. Thank you for
+              shopping with HashFit!
+            </p>
+            <button onClick={() => setOrderPlaced(false)}>
+              Continue Shopping
+            </button>
+          </div>
+        </div>
       )}
     </>
   );
