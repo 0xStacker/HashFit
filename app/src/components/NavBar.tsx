@@ -61,9 +61,8 @@ export function NavBar(props: NavBarProps) {
   useEffect(() => {
     if (props.wallet?.address) {
       props.HashFitKeyData?.load(props.wallet.provider, props.wallet.address);
-      console.log("address", props.wallet.address);
     }
-  }, [props.wallet?.address]);
+  });
 
   return (
     <div className="nav-bar">

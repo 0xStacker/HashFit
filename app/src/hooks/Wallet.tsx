@@ -10,7 +10,11 @@ export function useWallet() {
 
   function initProvider() {
     if (window.ethereum) {
-      setProvider(new BrowserProvider(window.ethereum));
+      try {
+        setProvider(new BrowserProvider(window.ethereum));
+      } catch {
+        alert("Connection rejected");
+      }
     } else {
       alert("Install Metamask");
     }
@@ -19,6 +23,14 @@ export function useWallet() {
   async function connect() {
     if (provider) {
       const accounts = await provider.send("eth_accounts", []);
+      const network = await provider.getNetwork();
+      console.log(network.chainId);
+      if (network.chainId !== BigInt("31337")) {
+        await window.ethereum.request({
+          method: "wwallet_switchEthereumChain",
+          params: [{ chainId: "31337" }],
+        });
+      }
       if (accounts.length > 0) {
         setAddress(accounts[0]);
       } else {
@@ -34,13 +46,15 @@ export function useWallet() {
 
   useEffect(() => {
     initProvider();
-    window.ethereum.on("accountsChanged", (accounts: string[]) => {
-      connect();
-    });
+    if (provider) {
+      window.ethereum.on("accountsChanged", (accounts: string[]) => {
+        connect();
+      });
 
-    // return window.ethereum.off("accountsChanged", (accounts: string[]) => {
-    //   setAddress(accounts[0]);
-    // });
+      // return window.ethereum.off("accountsChanged", (accounts: string[]) => {
+      //   setAddress(accounts[0]);
+      // });
+    }
   }, []);
 
   return { provider, address, signer, connect };
