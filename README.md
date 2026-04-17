@@ -1,56 +1,51 @@
-# HashFit
+## HashFit
 
----
-
-### Beyond DeFi: Building Web3’s Cultural Economy
+Sportswear has always been about identity. Who you rep. How long you've been repping them. And deep down, whether anyone can prove it even if you'd never say that out loud.HashFit is a sportswear brand built on a belief that the everyday buyer deserves the recognition they never get. Not the celebrity. Not the influencer. The person who actually shows up, buys the product, and keeps coming back.Every purchase mints a permanent, non-transferable on-chain record of ownership. Your loyalty to the brand lives on a public ledger; verifiable, unchallengeable, yours. Not in a database we control. Not in a folder of old receipts. On-chain, forever.Exclusivity at HashFit is rooted in loyalty, not spending power. The longer you've been here, the more the brand recognizes it. And when you say you've been here since day one, you can finally prove it.
 
 ## Overview
 
-HashFit is a sportswear brand built to connect physical apparel with on-chain identity and cultural progression.
-Every purchase mints a non-transferable Soulbound Token (SBT), turning ownership into a permanent on-chain record of support. Progression is earned over time, and exclusivity is rooted in belief and commitment not speculation.
+HashFit is built around **two drop markets** (Gen + Exclusive), a progression-based **Key mechanism**, and **generational scarcity** baked into the system.
 
----
+## Customer flow (no Web3 knowledge required)
+
+1. Shop like normal
+2. Checkout and place an order
+3. Receive the physical item
+4. Receive an on-chain proof of support tied to your purchase
+5. Use that proof (and Keys, if earned) to unlock access, discounts, and partner perks
 
 ## The Problem
 
-In Web3, apparel is rarely the product.
-It is almost always an accessory, like a secondary marketing layer attached to a protocol, NFT collection, or token launch. Merchandise exists to promote the project. It is **never** the project itself.
+If you’ve been buying from a brand since day one, copping every drop, showing up before it was cool, nobody can tell. Not verifiably. Your loyalty lives in your memory, maybe a folder of old receipts, and the story you tell people who may or may not believe you.
 
-Clothing in Web3 typically serves to:
+Meanwhile the brand is out sponsoring celebrities who’ve never worn the product in their life.
+This is the fundamental broken promise of consumer culture: the people who matter most to a brand the early believers, the consistent buyers, the ones who were there before the hype are invisible. There’s no infrastructure that sees them, rewards them, or gives them anything worth holding onto.
 
-- Raise capital
-- Signal affiliation
-- Reward short-term participation
+Web3 had a chance to fix this. It didn’t.
+Instead, blockchain innovation concentrated almost entirely around financial systems like yield protocols, liquidity mechanisms, and trading infrastructure products built for people with the technical and financial literacy to navigate them. The cultural and commercial layer was left underdeveloped.
 
-At the same time, web3 innovation is concentrated heavily around DeFi.
-
-The ecosystem is dominated by:
-
-- Yield protocols
-- Liquidity mechanisms
-- Trading infrastructure
-- Financial engineering products
-
-These systems primarily serve a fraction of participants with the technical or financial literacy to use them.
-Meanwhile, broader commercial and cultural layers remain underdeveloped:
-
-- Fashion
-- Physical goods
-- Brand-native commerce
-- Identity-linked retail
-
----
+And when Web3 brands did try to touch apparel, they got it backwards. Clothing became a marketing accessory: merchandise attached to a token launch, a hoodie dropped to reward short-term holders, a t-shirt that exists to promote the real product. The apparel was never the point.
+Nobody built a brand where the clothing is the product, the blockchain is the infrastructure, and the customer is the one who gets rewarded for showing up.
 
 ## The HashFit Solution
 
-HashFit introduces a simple but powerful system built around:
+HashFit makes the clothing the product and uses blockchain as the infrastructure behind it.
+You buy physical sportswear, it ships to you, and every purchase mints a permanent, non-transferable proof of support on-chain. That’s the core loop, everything else is built on top of it.
 
-- Physical clothing
-- Non-transferable proof of ownership SBTs
-- A progression-based key mechanism
-- Drop-based scarcity tied to generations
+None of this requires the customer to understand blockchain to participate.
 
-The goal is to remain **simple for users**, while being **deeply composable on-chain**.
+---
+
+## Why On-Chain
+
+HashFit is on-chain because for the first time, a customer can prove they were here first, not just claim it.
+Before this, loyalty was always a story you told. The sneakerhead who's been buying since day one, the supporter who copped every drop, the fan who rode with the brand before it meant anything. Their history lived in their own memory. Unverifiable and easy to dismiss. Now it lives on a public ledger. Timestamped. Permanent. Unchallengeable.
+You can tell someone you've got 50 pieces from this brand and your wallet says it. No screenshots. No receipts dug out of old emails. No one telling you to stop the cap.
+
+Right now every brand-to-customer relationship lives in a silo. Shopify's database. A loyalty app. A CRM. None of it talks to each other. When HashFit's purchase records are on a public ledger, any third party can read them and act on them commercially. A supplement brand can gate a discount to verified multi-gen HashFit holders without contacting us, because they know that audience is active and the purchase history that qualifies them is already public. Verified consumer loyalty becomes the basis for real economic activity between businesses that have never had a direct relationship.
+
+Furthermore, core HashFit infrastructure depends on this foundation to function at all. The Key mechanism, crafting and redemption rules aren't just stored on-chain for transparency, they require it. Without blockchain, Keys are just coupons a brand can mint, revoke, or manipulate at will. On-chain, the rules governing how Keys are earned, combined, and redeemed are immutable. Nobody, including HashFit, can change the game after you've already played by it.
+That's why we're on-chain. Not for the payments. For the proof.
 
 ---
 
@@ -58,15 +53,13 @@ The goal is to remain **simple for users**, while being **deeply composable on-c
 
 HashFit operates with **two parallel drop types**, each with a distinct role.
 
----
-
 ### 1. Gen Drops (Open Market)
 
 Gen drops are designed for accessibility and scale.
 
 **How it works:**
 
-- Users buy physical clothing with crypto
+- Users buy physical clothing
 - Each purchase mints a **non-transferable ownership SBT**
 - User gets their physical item
 
@@ -111,9 +104,11 @@ Exclusive drops live in a **separate market tab**, reinforcing intent and scarci
 
 ---
 
+Keys are **proof-of-support artifacts**, not speculative assets.
+
 ## The Key Mechanism
 
-Keys are **proof-of-support artifacts**, not speculative assets.
+Keys are ecosystem artifacts that powers progression and unlock exclusive perks for holders. Each generation comes with a predetermined set of Keys decided internally before the drop launches. The exact count and type is fixed in advance and does not change. Keys are earned, not sold.
 
 ### Key Types
 
@@ -123,18 +118,27 @@ There are three different categories of keys
 - Legendary
 - Epic
 
-### Earning Keys
+### How distribution works:
 
-- Each drop generation may come with a number of hidden random keys to be distributed among lucky early participants
-- Being a consistent early participant on [gen drop](https://www.notion.so/HashFit-2cd088e35f0e8040be4ed8025a8f1a11?pvs=21) sales automatically qualifies purchasing address for the key raffle of that drop generation. NB: This is the only way to earn mythic keys
-- There are other ways to earn legendary and epic keys such as participating in social tasks
+When a new generation drops, a one-hour early purchase window opens. Every address that buys within that window is automatically entered into that generation's raffle. When the window closes, the raffle runs and Keys are distributed among eligible addresses.
+That's the only drop-related Key distribution for that generation. No second chances. No extended windows. When it's done, it's done until the next generation launches and that would come with its own predetermined set of keys. Giveaways may occasionally distribute bonus Keys including Mythics. Ecosystem tasks remain open for Legendary and Epic Key earnings. But there are no further drop-related distributions until the next generation.
+
+_The window model was a deliberate choice over a first-X-buyers approach. A purchase count threshold rewards speed and creates a race; one that bots and technically advantaged users win disproportionately. A time window treats every address that showed up during the launch moment equally. Whether you bought in the first minute or the last, your commitment to the drop is what qualifies you. Not your connection speed._
+
+### Crafting:
+
+10 Legendary Keys combine into 1 Mythic Key. This exists so that consistent participants who keep showing up across tasks and generations have a path to Mythic access even if the raffle didn't land in their favor
+
+### What Mythic Access Actually Means
+
+Exclusive drops can be gated by holding conditions; for example, owning items from three distinct generations, or holding from a specific generation. These gates exist to reward generational purchasing consistency.
+A Mythic Key bypasses all of it. No holding requirements. No qualification checks. Full unconditional access to any exclusive drop, redeemable one-to-one for any item within it.
+Two paths lead into every exclusive drop. One through sustained purchasing history. One through a Mythic Key. Both are expressions of the same thing; you were here, you stayed, and the brand recognizes it.
 
 ### Mythic Keys
 
 - Can be redeemed for any item in an exclusive drop 1:1
 - Can be redeemed for IRL perks such as partnered gym passes
-- No expiry
-- Symbolize long-term belief in the brand
 - Enable progression without financial speculation
 
 ### Legendary Keys
@@ -145,34 +149,3 @@ There are three different categories of keys
 ### Epic Keys
 
 Epic keys by design are meant to be used as minor discount coupons across both categories of drops.
-
----
-
-## Why This Model Works
-
-### 1. Culture Over Complexity
-
-Users don’t need to understand DeFi, staking, or DAOs.
-
-They simply:
-
-- Buy clothing
-- Earn identity “tag” for the purchase
-- Get their purchased item
-
----
-
-### 2. Physical × On-Chain Symbiosis
-
-- The clothing is real and wearable
-- The identity is permanent and verifiable
-- Neither is meaningful without the other
-
----
-
-### 3. Anti-Flip by Design
-
-- Identity SBTs are non-transferable
-- Keys distributed randomly for fairness
-
-This aligns incentives with **long-term supporters**, not short-term flippers.
