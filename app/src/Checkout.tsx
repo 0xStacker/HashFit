@@ -32,10 +32,10 @@ type CheckOutProps = {
 // The ERC-20 Contract ABI, which is a common contract interface
 // for tokens (this is the Human-Readable ABI format)
 
-const paidRouterAddress = "0x0f5D1ef48f12b6f691401bfe88c2037c690a6afe";
-const keyRouterAddress = "0x90118d110B07ABB82Ba8980D1c5cC96EeA810d2C";
-const mythicKeyAddress = "0x712516e61C8B383dF4A63CFe83d7701Bce54B03e";
-const usdtAddress = "0x8464135c8F25Da09e49BC8782676a84730C318bC";
+const paidRouterAddress = "0x964a143aDfcaDE7352820Db06C3f243c43C3692E";
+const keyRouterAddress = "0xCa8Ab90b5c6a9D8079149bDB86c51C89FE3d516c";
+const mythicKeyAddress = "0x1e974e3EC9D47E8552dCA62C408a0b1d0f5b891c";
+const usdtAddress = "0x7e45fBA8Cf17097dbe7DFC992713F82767b973F0";
 
 const usdtAbi = ["function approve(address spender, uint256 value)"];
 

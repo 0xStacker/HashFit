@@ -46,8 +46,8 @@ async function fetchKeys(
   provider: BrowserProvider | null,
   address: string | null,
 ) {
-  const mythicAddress = "0x712516e61C8B383dF4A63CFe83d7701Bce54B03e";
-  const legendaryAddress = "0xbCF26943C0197d2eE0E5D05c716Be60cc2761508";
+  const mythicAddress = "0x1e974e3EC9D47E8552dCA62C408a0b1d0f5b891c";
+  const legendaryAddress = "0xC4fE20e8EcD1aF51b4672671a429E2Ee56dc1650";
 
   const keysABI = [
     "function balanceOf(address) view returns (uint256)",
@@ -63,92 +63,33 @@ async function fetchKeys(
     keysABI,
     provider,
   );
-  const mythicKeys = await mythicKeyContract.balanceOf(address);
+  let mythicKeys = 0;
+  let leggyKeys = 0;
+
+  try {
+    mythicKeys = await mythicKeyContract.balanceOf(address);
+  } catch (e: any) {
+    console.log(e);
+  }
+
   const legendaryKeyContract = new ethers.Contract(
     legendaryAddress,
     keysABI,
     provider,
   );
-  const leggyKeys = await legendaryKeyContract.balanceOf(address);
+  try {
+    leggyKeys = await legendaryKeyContract.balanceOf(address);
+  } catch (e: any) {
+    console.log(e);
+  }
+
   return { mythic: mythicKeys, legendary: leggyKeys };
 }
-
-// // Fetch and organize items present in gen and exclusive drops from smartcontracts
-// async function fetchDrops(provider: BrowserProvider | null) {
-//   const genDrops: Record<string, { items: any[]; metadata: any }> = {};
-//   const exclusiveDrops: Record<string, { items: any[]; metadata: any }> = {};
-
-//   if (!provider) {
-//     return { genDrops, exclusiveDrops };
-//   }
-//   const factoryAddress = "0x75537828f2ce51be7289709686A69CbFDbB714F1";
-//   const factoryAbi = [
-//     "function genDrops() view returns(address[])",
-//     "function exclusiveDrops() view returns(address[])",
-//   ];
-
-//   const dropAbi = [
-//     "function items() view returns((uint64 maxSupply, uint64 discount, uint64 priceInKeys, uint256 price, string name, string uri)[] memory)",
-//     "function contractUri() view returns(string)",
-//     "function name() view returns(string)",
-//     "function startTime() view returns(uint256)",
-//   ];
-
-//   const factoryContract = new ethers.Contract(
-//     factoryAddress,
-//     factoryAbi,
-//     provider,
-//   );
-
-//   const fetchedGenDrops: any[] = await factoryContract.genDrops();
-//   const fetchedExclusiveDrops: any[] = await factoryContract.exclusiveDrops();
-//   for (const i of fetchedGenDrops) {
-//     const drop = new ethers.Contract(i, dropAbi, provider);
-//     const dropItems = await drop.items();
-//     console.log(dropItems.target);
-//     const dropUri = await drop.contractUri();
-//     const dropName = await drop.name();
-//     const startTime = await drop.startTime();
-//     console.log("unique", dropItems.length);
-//     const metadata = {
-//       name: dropName,
-//       uri: dropUri,
-//       startTime: startTime,
-//       uniqueItems: dropItems.length,
-//     };
-//     genDrops[i] = { items: dropItems, metadata: metadata };
-//   }
-
-//   for (const i of fetchedExclusiveDrops) {
-//     const drop = new ethers.Contract(i, dropAbi, provider);
-//     const dropItems = await drop.items();
-//     const metadata = await drop.metadata();
-//     exclusiveDrops[i] = { items: dropItems, metadata: metadata };
-//   }
-//   console.log(genDrops);
-//   console.log(exclusiveDrops);
-//   return { genDrops, exclusiveDrops };
-// }
 
 export function App() {
   const { provider, address, signer, connect } = useWallet();
   const [keys, setKeys] = useState({ legendary: 0, mythic: 0 });
   const [bag, setBag] = useState(shopBag);
-  // const [drops, setDrops] = useState({ genDrops: {}, exclusiveDrops: {} });
-
-  // async function loadDrops() {
-  //   try {
-  //     const drops = await fetchDrops(provider);
-  //     setDrops(drops);
-  //   } catch {
-  //     setDrops({ genDrops: {}, exclusiveDrops: {} });
-  //   }
-  // }
-  // useEffect(() => {
-  //   if (provider) {
-  //     loadDrops();
-  //   }
-  // }, [provider]);
 
   async function loadKeys(
     provider: BrowserProvider | null,

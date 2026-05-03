@@ -60,7 +60,11 @@ type NavBarProps = {
 export function NavBar(props: NavBarProps) {
   useEffect(() => {
     if (props.wallet?.address) {
-      props.HashFitKeyData?.load(props.wallet.provider, props.wallet.address);
+      try {
+        props.HashFitKeyData?.load(props.wallet.provider, props.wallet.address);
+      } catch (e: any) {
+        console.log(e);
+      }
     }
   });
 

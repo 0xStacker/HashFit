@@ -24,11 +24,10 @@ export function useWallet() {
     if (provider) {
       const accounts = await provider.send("eth_accounts", []);
       const network = await provider.getNetwork();
-      console.log(network.chainId);
-      if (network.chainId !== BigInt("31337")) {
+      if (network.chainId !== BigInt("421614")) {
         await window.ethereum.request({
-          method: "wwallet_switchEthereumChain",
-          params: [{ chainId: "31337" }],
+          method: "wallet_switchEthereumChain",
+          params: [{ chainId: "421614" }],
         });
       }
       if (accounts.length > 0) {
