@@ -34,14 +34,14 @@ export function WalletSection(props: {
             ></path>{" "}
           </g>
         </svg>
-        {props.address !== "Connect Wallet" && props.address !== undefined && (
+        {props.address !== "Connect Wallet" && props.address !== "" && (
           <>
             {" "}
             {props.address?.slice(0, 6)}...{props.address?.slice(36)}
           </>
         )}
 
-        {props.address === undefined && <>Connect Wallet</>}
+        {props.address === "" && <>Connect Wallet</>}
       </button>
     </>
   );

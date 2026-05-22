@@ -42,12 +42,12 @@ const shopBag: Bag = {
 };
 
 // Fetch HashFit Keys held by user
-export async function fetchKeys(
+async function fetchKeys(
   provider: BrowserProvider | null,
   address: string | null,
 ) {
-  const mythicAddress = "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9";
-  const legendaryAddress = "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9";
+  const mythicAddress = "0x1e974e3EC9D47E8552dCA62C408a0b1d0f5b891c";
+  const legendaryAddress = "0xC4fE20e8EcD1aF51b4672671a429E2Ee56dc1650";
 
   const keysABI = [
     "function balanceOf(address) view returns (uint256)",
@@ -63,13 +63,26 @@ export async function fetchKeys(
     keysABI,
     provider,
   );
-  const mythicKeys = await mythicKeyContract.balanceOf(address);
+  let mythicKeys = 0;
+  let leggyKeys = 0;
+
+  try {
+    mythicKeys = await mythicKeyContract.balanceOf(address);
+  } catch (e: any) {
+    console.log(e);
+  }
+
   const legendaryKeyContract = new ethers.Contract(
     legendaryAddress,
     keysABI,
     provider,
   );
-  const leggyKeys = await legendaryKeyContract.balanceOf(address);
+  try {
+    leggyKeys = await legendaryKeyContract.balanceOf(address);
+  } catch (e: any) {
+    console.log(e);
+  }
+
   return { mythic: mythicKeys, legendary: leggyKeys };
 }
 
