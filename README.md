@@ -1,13 +1,12 @@
-## HashFit
+Culture has always had proof of presence. The early adopter. The day-one supporter. The person who was there before it was big. And the one who keeps showing up. Blockchain finally gives that proof somewhere to live.
 
-Sportswear has always been about identity. Who you rep. How long you've been repping them. And deep down, whether anyone can prove it even if you'd never say that out loud.HashFit is a sportswear brand built on a belief that the everyday buyer deserves the recognition they never get. Not the celebrity. Not the influencer. The person who actually shows up, buys the product, and keeps coming back.Every purchase mints a permanent, non-transferable on-chain record of ownership. Your loyalty to the brand lives on a public ledger; verifiable, unchallengeable, yours. Not in a database we control. Not in a folder of old receipts. On-chain, forever.Exclusivity at HashFit is rooted in loyalty, not spending power. The longer you've been here, the more the brand recognizes it. And when you say you've been here since day one, you can finally prove it.
+HashFit is a sportswear brand, and one of the first physical consumer brands to put its entire loyalty architecture on-chain. Every purchase creates a permanent, non-transferable on-chain record. Not a digital collectible, not a reward point. A verified record of a real-world transaction that belongs to the person who made it. You bought in. You showed up. Now there is something that says so, permanently, in a place no one can edit. This is what Web3 actually makes possible. Not replacing physical goods with digital ones, but anchoring physical culture to a public ledger. The apparel is physical. The proof is permanent.Your loyalty to HashFit does not live in our database. It lives on-chain. No rebrand, no acquisition, no terms-of-service update can touch it. What you built here is yours. HashFit is proof that a physical brand can be built this way from day one. Not retrofitted. Not tokenized as an afterthought. Native to the chain, grounded in the real world.
 
 ## Overview
 
 HashFit is built around **two drop markets** (Gen + Exclusive), a progression-based **Key mechanism**, and **generational scarcity** baked into the system.
 
-## Customer flow (no Web3 knowledge required)
-
+## Customer flow
 1. Shop like normal
 2. Checkout and place an order
 3. Receive the physical item
@@ -31,8 +30,6 @@ Nobody built a brand where the clothing is the product, the blockchain is the in
 
 HashFit makes the clothing the product and uses blockchain as the infrastructure behind it.
 You buy physical sportswear, it ships to you, and every purchase mints a permanent, non-transferable proof of support on-chain. That’s the core loop, everything else is built on top of it.
-
-None of this requires the customer to understand blockchain to participate.
 
 ---
 
@@ -93,7 +90,7 @@ For every generation (e.g. Gen 1), there exists a parallel **Exclusive Drop**.
 - Visibly unique features
 - Rare colorways
 - Subtle exclusive markings (inner labels, stitched text, etc.)
-- Designed to feel _earned_, not just bought
+- Designed to feel *earned*, not just bought
 
 **Access options:**
 
@@ -123,7 +120,7 @@ There are three different categories of keys
 When a new generation drops, a one-hour early purchase window opens. Every address that buys within that window is automatically entered into that generation's raffle. When the window closes, the raffle runs and Keys are distributed among eligible addresses.
 That's the only drop-related Key distribution for that generation. No second chances. No extended windows. When it's done, it's done until the next generation launches and that would come with its own predetermined set of keys. Giveaways may occasionally distribute bonus Keys including Mythics. Ecosystem tasks remain open for Legendary and Epic Key earnings. But there are no further drop-related distributions until the next generation.
 
-_The window model was a deliberate choice over a first-X-buyers approach. A purchase count threshold rewards speed and creates a race; one that bots and technically advantaged users win disproportionately. A time window treats every address that showed up during the launch moment equally. Whether you bought in the first minute or the last, your commitment to the drop is what qualifies you. Not your connection speed._
+*The window model was a deliberate choice over a first-X-buyers approach. A purchase count threshold rewards speed and creates a race; one that bots and technically advantaged users win disproportionately. A time window treats every address that showed up during the launch moment equally. Whether you bought in the first minute or the last, your commitment to the drop is what qualifies you. Not your connection speed.*
 
 ### Crafting:
 
@@ -149,3 +146,5 @@ Two paths lead into every exclusive drop. One through sustained purchasing histo
 ### Epic Keys
 
 Epic keys by design are meant to be used as minor discount coupons across both categories of drops.
+
+
