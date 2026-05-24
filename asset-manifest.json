@@ -1,13 +1,13 @@
 {
   "files": {
     "main.css": "/HashFit/static/css/main.08eabb7b.css",
-    "main.js": "/HashFit/static/js/main.6c56a8ff.js",
+    "main.js": "/HashFit/static/js/main.a869c5fb.js",
     "index.html": "/HashFit/index.html",
     "main.08eabb7b.css.map": "/HashFit/static/css/main.08eabb7b.css.map",
-    "main.6c56a8ff.js.map": "/HashFit/static/js/main.6c56a8ff.js.map"
+    "main.a869c5fb.js.map": "/HashFit/static/js/main.a869c5fb.js.map"
   },
   "entrypoints": [
     "static/css/main.08eabb7b.css",
-    "static/js/main.6c56a8ff.js"
+    "static/js/main.a869c5fb.js"
   ]
 }
